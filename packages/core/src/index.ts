@@ -37,6 +37,7 @@ export const eventSchema = z
   .strict();
 export const payloadSchema = z
   .object({
+    submissionId: z.string().uuid().optional(),
     projectKey: z.string().min(1).max(100),
     title: z.string().trim().min(1).max(160),
     description: z.string().trim().min(1).max(4000),
@@ -94,3 +95,39 @@ export class RateLimiter {
     return ++v.count <= this.max;
   }
 }
+
+export const projectSchema = z
+  .object({
+    name: z.string().trim().min(1).max(80),
+    origins: z
+      .array(
+        z
+          .string()
+          .max(300)
+          .refine((value) => {
+            try {
+              const u = new URL(value);
+              return (
+                ["https:", "http:"].includes(u.protocol) &&
+                u.origin === value &&
+                !u.hostname.includes("*")
+              );
+            } catch {
+              return false;
+            }
+          }, "Use an exact http(s) origin without a path"),
+      )
+      .min(1)
+      .max(20),
+  })
+  .strict();
+export const triageSchema = z
+  .object({
+    status: z.enum(["OPEN", "IN_PROGRESS", "RESOLVED"]).optional(),
+    severity: z.enum(["LOW", "MEDIUM", "HIGH"]).optional(),
+  })
+  .strict()
+  .refine(
+    (v) => Boolean(v.status || v.severity),
+    "Choose a status or severity",
+  );

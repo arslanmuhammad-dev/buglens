@@ -3,19 +3,79 @@ import { useEffect, useState } from "react";
 export default function Demo() {
   const [message, setMessage] = useState("");
   const [interactive, setInteractive] = useState(false);
+  const [workspaceName, setWorkspaceName] = useState("");
+  const [canConnect, setCanConnect] = useState(false);
   useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "/widget.js";
-    script.dataset.projectKey = "buglens-demo-public";
-    script.defer = true;
-    script.onload = () => setInteractive(true);
-    script.onerror = () =>
-      setMessage("Widget failed to load. Rebuild it with npm run build.");
-    document.body.append(script);
+    let cancelled = false;
+    let script: HTMLScriptElement | undefined;
+    async function load() {
+      let key = "buglens-demo-public";
+      try {
+        const response = await fetch("/api/projects");
+        if (response.ok) {
+          const projects = (await response.json()) as {
+            name: string;
+            key: string;
+            origins: string[];
+          }[];
+          const project = projects.find((p) =>
+            p.origins.includes(location.origin),
+          );
+          if (project) {
+            key = project.key;
+            if (!cancelled) setWorkspaceName(project.name);
+          } else if (!cancelled) setCanConnect(true);
+        }
+      } catch {
+        /* Anonymous visitors can still try the public demo widget. */
+      }
+      if (cancelled) return;
+      document
+        .getElementById("buglens-widget-root")
+        ?.dispatchEvent(new Event("buglens:destroy"));
+      script = document.createElement("script");
+      script.src = "/widget.js";
+      script.dataset.projectKey = key;
+      script.onload = () => {
+        if (!cancelled) setInteractive(true);
+      };
+      script.onerror = () => {
+        if (!cancelled)
+          setMessage(
+            "The reporting widget could not load. Please reload to retry.",
+          );
+      };
+      document.body.append(script);
+    }
+    void load();
     return () => {
-      script.remove();
+      cancelled = true;
+      if (script) {
+        script.onload = null;
+        script.remove();
+      }
+      document
+        .getElementById("buglens-widget-root")
+        ?.dispatchEvent(new Event("buglens:destroy"));
     };
   }, []);
+  async function connect() {
+    try {
+      const response = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "My demo storefront",
+          origins: [location.origin],
+        }),
+      });
+      if (!response.ok) throw Error();
+      location.reload();
+    } catch {
+      setMessage("Could not connect the demo. Please retry.");
+    }
+  }
+
   return (
     <main className="store">
       <nav className="store-nav">
@@ -28,6 +88,17 @@ export default function Demo() {
       <div className="demo-banner">
         ◈ &nbsp; BugLens playground · A fictional store with intentional bugs.
         Fake data only. Try an action, then use “Report a problem”.
+        {workspaceName && (
+          <span>
+            {" "}
+            Reports go to your project: <strong>{workspaceName}</strong>.
+          </span>
+        )}
+        {canConnect && (
+          <button className="link" onClick={() => void connect()}>
+            Connect demo to my workspace ↗
+          </button>
+        )}
       </div>
       <section className="product">
         <div
@@ -76,7 +147,14 @@ export default function Demo() {
               disabled={!interactive}
               className="primary"
               onClick={async () => {
-                await fetch("/api/demo-order", { method: "POST" });
+                try {
+                  await fetch("/api/demo-order", { method: "POST" });
+                } catch {
+                  setMessage(
+                    "The demo request could not reach the server. You can still report it.",
+                  );
+                  return;
+                }
                 setMessage(
                   "Intentional failure: order service unavailable (503). Report this problem ↘",
                 );

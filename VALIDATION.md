@@ -1,49 +1,52 @@
 # Verification results
 
-Executed locally on 21 October 2026 using Node 25.2.1, npm 11.10.0, PostgreSQL 14 and Chromium 156. GitHub Actions also passed on Node 22 and PostgreSQL 16; remote run evidence is linked below.
+Executed on 21 October 2026. Local checks used Node 25.2.1, PostgreSQL 14 and Chromium; GitHub Actions used Node 22 and PostgreSQL 16. Hosted runtime uses Node 22, Neon PostgreSQL and private Vercel Blob.
 
-| Check | Actual result |
-| --- | --- |
-| `npm run lint` | Passed |
-| `npm run typecheck` | Passed |
-| `npm test` with guarded test database | 15 passed, no skips |
-| `npm run build` (webpack) | Passed, all routes generated |
-| `npm run test:e2e` | 9 passed, including desktop Chromium and mobile Chromium |
-| `npm audit` after dependency patching | Zero advisories |
-| Final `npm audit --omit=dev` | Zero advisories |
-| Fresh test database migration, seed and reset | Passed |
+| Check                                  | Actual result                             |
+| -------------------------------------- | ----------------------------------------- |
+| `npm run lint`                         | Passed                                    |
+| `npm run typecheck`                    | Passed                                    |
+| `npm test` with guarded test database  | 27 passed, no skips                       |
+| `npm run build` (webpack)              | Passed                                    |
+| Chromium E2E suite                     | 15 passed, including mobile core workflow |
+| `npm audit --omit=dev`                 | Zero advisories                           |
+| Fresh test database migration and seed | Passed                                    |
+| Vercel production build and migrations | Passed                                    |
+| Opt-in real hosted acceptance script   | Passed; see DEPLOYMENT.md                 |
 
-Browser checks run against a production server, a separate `buglens_test` database and `/private/tmp/buglens-test-screenshots`. The successful complete browser run took 22.5 seconds. Earlier failures were fixed: duplicate development widget initialization, stale diagnostics preview after an asynchronous request, readiness of demo actions before collection starts, generated non-strict Next TypeScript configuration, and a test locator which targeted a hidden select option. Turbopack’s CSS worker failed on this machine; the supported webpack backend builds successfully and is the documented default.
+The final complete local browser run took 15.5 seconds. Tests use a separate `buglens_test` database, temporary screenshot directory, unique fake accounts, local error endpoints and retained failure traces/screenshots. Reset guards reject non-test databases. Test fixtures clear only test-database rate counters between scenarios; production rate limits remain enabled.
 
 ## Coverage
 
-The nine browser tests bundle the requested scenarios:
+The fifteen browser scenarios bundle the requested functionality:
 
 - Signup, project creation and installation snippet.
-- Widget loading, keyboard launcher/form navigation, native required-field validation and style isolation.
-- Failed demo request in diagnostics; real submission visible in the dashboard.
-- Explicit capture, pointer annotation, keyboard-coordinate redaction and screenshot removal; reporting without a screenshot.
-- Pixel checks on a known marked private area; opaque black pixels verified in exported PNG and authenticated server-served PNG.
-- Controlled canvas failure leaves reporting usable; failed ingestion retains entered text and permits retry.
-- Status and internal notes persist after reload; notes can be deleted.
-- Title search, project/status/severity filters and pagination.
-- Separate authenticated user receives 404 for another user’s report, mutation, deletion and actual stored screenshot; unauthenticated requests receive 401.
-- Invalid project keys, disallowed origins and oversized actual HTTP payloads are rejected.
-- Actual outgoing JSON excludes demo field values and URL query secrets; diagnostics can be removed.
-- Core reporting at an iPhone-sized Chromium viewport.
-- Deleting a report reduces stored asset count and removes authenticated access.
+- Widget loading, keyboard navigation, native required-field validation and style isolation.
+- Failed fetch/XHR and controlled JavaScript errors in diagnostics, including an independent host origin.
+- Real widget submission appears in its owner's dashboard; a new user's demo connects to their own project.
+- Explicit capture, pointer/coordinate annotation, screenshot removal and reporting without capture.
+- Password, ordinary input and marked-private pixel masking without changing live host input values.
+- Opaque redaction pixels survive export, upload and authenticated image retrieval.
+- Capture failure leaves reporting usable; failed submission preserves form data and permits retry.
+- Lost-response retry produces one report through a stable idempotency key.
+- Status and notes persist after reload; notes can be deleted and failed notes preserve text.
+- Search, project/status/severity filters and pagination.
+- A separate account cannot read, change, delete or retrieve another user's report/screenshot.
+- Invalid keys/origins, malformed/oversized payloads and invalid API routes/verbs receive controlled errors.
+- Actual outgoing JSON excludes input values, URL query values and request bodies.
+- Mobile Chromium core reporting and collector teardown/frozen API tolerance.
+- Deleting a report deletes its asset; repeated failed authentication is rate limited.
 
-Unit/integration checks exercise strict payload allowlists, string/array limits, URL sanitization, safe error URLs, bounded buffer copies, internal-request exclusion, rate-limit expiry, malformed/oversized screenshots, real local storage, ownership denial, transactional status history, cleanup failure retention and uploaded-file cleanup after an injected database failure.
+Unit/integration checks cover payload allowlists and limits, sanitization, bounded buffers, internal-request exclusion, rate limits, ownership, screenshot validation, real local storage, cleanup after injected database/storage failures, transactional status history, HTTP error behavior and the private Blob adapter.
+
+## Hosted verification
+
+[BugLens live deployment](https://buglens-tawny.vercel.app) passed the guarded `scripts/hosted-smoke.mjs` workflow against real PostgreSQL and private Blob storage. This includes HTTPS signup/logout/login, snippet generation, diagnostic ingestion, stored screenshot retrieval/redaction pixels, direct private Blob denial, cross-account access denial, persisted triage/notes after reload, physical Blob deletion, an independently hosted mobile embed, sensitive-field exclusion and controlled bad requests. Only fake data was used. See [DEPLOYMENT.md](DEPLOYMENT.md) for repetition instructions and the exact smoke scope.
+
+## GitHub Actions evidence
+
+The application changes at `d5c539fe94aed706f3c13086664a5b5fc341be54` passed both [PR #7 checks](https://github.com/arslanmuhammad-dev/buglens/actions/runs/39632480044) and [branch checks](https://github.com/arslanmuhammad-dev/buglens/actions/runs/39632375962). These runs include install, database migration/seed, lint, TypeScript, unit/integration, production build and Chromium/mobile tests. Subsequent commits add the hosted smoke script, hosted seed URLs and evidence; their CI results are visible on PR #7.
 
 ## Boundaries
 
-The MVP was subsequently pushed through feature pull requests on user request. No application deployment or site publication occurred. Remote CI results are recorded below when available. Firefox/WebKit, distributed rate limits/storage, crash-time file reconciliation, email delivery, and production load/security testing are not claimed. Pointer annotation was tested in desktop Chromium; mobile Chromium covers the core report flow without capture. See README for public-ingestion and html2canvas limitations.
-
-## GitHub Actions verification
-
-On 21 October 2026, both checks for commit `f503202184f0a9e5ad91d47086e98d8b4a4fffc0` completed successfully:
-
-- [PR #6 checks](https://github.com/arslanmuhammad-dev/buglens/actions/runs/39625965113)
-- [Feature branch push checks](https://github.com/arslanmuhammad-dev/buglens/actions/runs/39625904508)
-
-These runs used Node 22 and PostgreSQL 16 and passed installation, migration/seed, lint, TypeScript, unit/integration tests, production build, and Chromium/mobile browser tests. The following documentation-only commit records this evidence; the links above refer to the exact tested source commit.
+This verifies an MVP, not absence of every bug. Firefox/WebKit, load testing, crash-time asset reconciliation, backup restoration, email delivery and enterprise abuse controls have not been verified. Shared database-backed limits and real private storage have been implemented and exercised; a sustained distributed abuse test has not been run. Public Origin headers are spoofable and keys are public. html2canvas cannot reproduce every CSS feature, cross-origin image, iframe or browser-native surface. Mobile Chromium is not Safari. LinkedIn publication is awaiting draft review.

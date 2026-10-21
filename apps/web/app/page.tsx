@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 type Project = { id: string; name: string; key: string; origins: string[] };
 type Report = {
   id: string;
@@ -25,9 +25,15 @@ async function api(path: string, method = "GET", data?: unknown) {
     headers: { "Content-Type": "application/json" },
     ...(data ? { body: JSON.stringify(data) } : {}),
   });
-  const result = await response.json();
+  const result = await response.json().catch(() => ({
+    error: "The server returned an unexpected response. Please retry.",
+  }));
   if (!response.ok)
-    throw Error(result.error || result.message || "Request failed");
+    throw Error(
+      typeof result.error === "string"
+        ? result.error
+        : result.error?.message || result.message || "Request failed",
+    );
   return result;
 }
 const label = (s: string) => s.toLowerCase().replaceAll("_", " ");
@@ -48,7 +54,27 @@ export default function Dashboard() {
     [selected, setSelected] = useState<Report | null>(null),
     [projectForm, setProjectForm] = useState(false),
     [editing, setEditing] = useState<Project | null>(null);
+  const refreshVersion = useRef(0);
+  const actionPending = useRef(false);
+  const [busy, setBusy] = useState(false);
+  async function runAction(action: () => Promise<void>) {
+    if (actionPending.current) return;
+    actionPending.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      await action();
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Operation failed. Please retry.",
+      );
+    } finally {
+      actionPending.current = false;
+      setBusy(false);
+    }
+  }
   async function refresh() {
+    const version = ++refreshVersion.current;
     try {
       const [ps, data] = await Promise.all([
         api("projects"),
@@ -63,18 +89,33 @@ export default function Dashboard() {
             }),
         ),
       ]);
+      if (version !== refreshVersion.current) return;
+      const lastPage = Math.max(1, Math.ceil(data.total / 8));
+      if (page > lastPage) {
+        setPage(lastPage);
+        return;
+      }
       setProjects(ps);
       setReports(data.reports);
       setTotal(data.total);
     } catch (e) {
-      setError((e as Error).message);
+      if (version === refreshVersion.current) setError((e as Error).message);
     }
   }
   useEffect(() => {
     fetch("/api/auth/get-session")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw Error("Session unavailable");
+        return r.json();
+      })
       .then((s) => {
         setUser(s?.user || null);
+        setReady(true);
+      })
+      .catch(() => {
+        setError(
+          "Could not connect. Check your connection and reload to retry.",
+        );
         setReady(true);
       });
   }, []);
@@ -90,13 +131,11 @@ export default function Dashboard() {
   }
   async function change(data: object) {
     if (!selected) return;
-    try {
+    await runAction(async () => {
       await api("reports/" + selected.id, "PATCH", data);
       await detail(selected.id);
       await refresh();
-    } catch (e) {
-      setError((e as Error).message);
-    }
+    });
   }
   if (!ready)
     return <div className="loading">◉ &nbsp; Opening your workspace…</div>;
@@ -109,9 +148,7 @@ export default function Dashboard() {
           </a>
           <span className="eyebrow">LESS BACK-AND-FORTH. MORE FIXES.</span>
           <h1>
-            Every bug has{" "}
-            <br />a story.{" "}
-            <br />
+            Every bug has <br />a story. <br />
             <em>See the whole thing.</em>
           </h1>
           <p>
@@ -139,15 +176,14 @@ export default function Dashboard() {
             <h2>{signup ? "Start seeing clearly." : "Welcome back."}</h2>
             <p>
               {signup
-                ? "Create your free local workspace."
+                ? "Create your private debugging workspace."
                 : "Sign in to pick up where you left off."}
             </p>
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
-                setError("");
                 const data = new FormData(e.currentTarget);
-                try {
+                await runAction(async () => {
                   const result = await api(
                     "auth/" + (signup ? "sign-up/email" : "sign-in/email"),
                     "POST",
@@ -158,9 +194,7 @@ export default function Dashboard() {
                     },
                   );
                   setUser(result.user);
-                } catch (e) {
-                  setError((e as Error).message);
-                }
+                });
               }}
             >
               {signup && (
@@ -193,7 +227,7 @@ export default function Dashboard() {
               <p className="error" role="alert">
                 {error}
               </p>
-              <button className="primary wide">
+              <button disabled={busy} className="primary wide">
                 {signup ? "Create workspace" : "Sign in"}{" "}
                 <span aria-hidden="true">↗</span>
               </button>
@@ -264,8 +298,14 @@ export default function Dashboard() {
           <button
             className="nav"
             onClick={async () => {
-              await api("auth/sign-out", "POST", {});
-              setUser(null);
+              await runAction(async () => {
+                await api("auth/sign-out", "POST", {});
+                refreshVersion.current++;
+                setSelected(null);
+                setProjects([]);
+                setReports([]);
+                setUser(null);
+              });
             }}
           >
             ↪ <span>Sign out</span>
@@ -283,7 +323,7 @@ export default function Dashboard() {
                 : "Projects"}
           </span>
           <div>
-            <span className="live-dot" /> All systems ready{" "}
+            <span className="live-dot" /> Private workspace{" "}
             <span className="avatar small-avatar">{user.name[0]}</span>
           </div>
         </header>
@@ -308,12 +348,15 @@ export default function Dashboard() {
                   </p>
                 </div>
                 <button
+                  disabled={busy}
                   className="danger"
                   onClick={async () => {
                     if (confirm("Delete this report and its screenshot?")) {
-                      await api("reports/" + selected.id, "DELETE");
-                      setSelected(null);
-                      await refresh();
+                      await runAction(async () => {
+                        await api("reports/" + selected.id, "DELETE");
+                        setSelected(null);
+                        await refresh();
+                      });
                     }
                   }}
                 >
@@ -373,11 +416,13 @@ export default function Dashboard() {
                         <button
                           className="link"
                           onClick={async () => {
-                            await api(
-                              `reports/${selected.id}/notes?note=${n.id}`,
-                              "DELETE",
-                            );
-                            await detail(selected.id);
+                            await runAction(async () => {
+                              await api(
+                                `reports/${selected.id}/notes?note=${n.id}`,
+                                "DELETE",
+                              );
+                              await detail(selected.id);
+                            });
                           }}
                         >
                           Delete note
@@ -388,11 +433,14 @@ export default function Dashboard() {
                       onSubmit={async (e) => {
                         e.preventDefault();
                         const form = e.currentTarget;
-                        await api(`reports/${selected.id}/notes`, "POST", {
-                          body: new FormData(form).get("body"),
+                        const body = new FormData(form).get("body");
+                        await runAction(async () => {
+                          await api(`reports/${selected.id}/notes`, "POST", {
+                            body,
+                          });
+                          form.reset();
+                          await detail(selected.id);
                         });
-                        form.reset();
-                        await detail(selected.id);
                       }}
                     >
                       <label>
@@ -404,7 +452,9 @@ export default function Dashboard() {
                           placeholder="Leave a note for your future self…"
                         />
                       </label>
-                      <button className="primary">Add note</button>
+                      <button disabled={busy} className="primary">
+                        Add note
+                      </button>
                     </form>
                   </section>
                 </div>
@@ -414,6 +464,7 @@ export default function Dashboard() {
                     <label>
                       Status
                       <select
+                        disabled={busy}
                         aria-label="Report status"
                         value={selected.status}
                         onChange={(e) =>
@@ -430,6 +481,7 @@ export default function Dashboard() {
                     <label>
                       Severity
                       <select
+                        disabled={busy}
                         aria-label="Report severity"
                         value={selected.severity}
                         onChange={(e) =>
@@ -509,9 +561,11 @@ export default function Dashboard() {
                     <button
                       className="secondary"
                       onClick={() =>
-                        void navigator.clipboard.writeText(
-                          `<script src="${location.origin}/widget.js" data-project-key="${p.key}" defer></script>`,
-                        )
+                        void runAction(async () => {
+                          await navigator.clipboard.writeText(
+                            `<script src="${location.origin}/widget.js" data-project-key="${p.key}" defer></script>`,
+                          );
+                        })
                       }
                     >
                       Copy snippet
@@ -736,7 +790,12 @@ export default function Dashboard() {
           )}
           {projectForm && (
             <div className="modal">
-              <section className="card">
+              <section
+                className="card"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Project settings"
+              >
                 <button
                   className="close link"
                   onClick={() => setProjectForm(false)}
@@ -748,7 +807,7 @@ export default function Dashboard() {
                   onSubmit={async (e) => {
                     e.preventDefault();
                     const data = new FormData(e.currentTarget);
-                    try {
+                    await runAction(async () => {
                       await api(
                         "projects" + (editing ? "/" + editing.id : ""),
                         editing ? "PATCH" : "POST",
@@ -763,9 +822,7 @@ export default function Dashboard() {
                       setProjectForm(false);
                       setTab("projects");
                       await refresh();
-                    } catch (e) {
-                      setError((e as Error).message);
-                    }
+                    });
                   }}
                 >
                   <label>
@@ -791,7 +848,10 @@ export default function Dashboard() {
                     Use exact origins, including port. Public project keys
                     identify your project; they are not secrets.
                   </p>
-                  <button className="primary">
+                  <p className="error" role="alert">
+                    {error}
+                  </p>
+                  <button disabled={busy} className="primary">
                     {editing ? "Save project" : "Create project"}
                   </button>
                 </form>

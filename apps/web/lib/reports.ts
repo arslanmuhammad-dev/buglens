@@ -13,21 +13,34 @@ export async function deleteReport(id: string, ownerId: string) {
   await db.report.delete({ where: { id } });
   return true;
 }
-export async function setStatus(id: string, ownerId: string, status: string) {
+export async function updateTriage(
+  id: string,
+  ownerId: string,
+  input: { status?: string; severity?: string },
+) {
   return db.$transaction(
     async (tx) => {
       const report = await tx.report.findFirst({
         where: { id, project: { ownerId } },
       });
       if (!report) return null;
-      if (report.status === status) return report;
+
       return tx.report.update({
         where: { id },
-        data: { status, history: { create: { status } } },
+        data: {
+          ...input,
+          ...(input.status && input.status !== report.status
+            ? { history: { create: { status: input.status } } }
+            : {}),
+        },
       });
     },
     { isolationLevel: "Serializable" },
   );
+}
+
+export function setStatus(id: string, ownerId: string, status: string) {
+  return updateTriage(id, ownerId, { status });
 }
 
 import { payloadSchema } from "@buglens/core";
@@ -36,6 +49,17 @@ export async function createReport(
   projectId: string,
   payload: z.infer<typeof payloadSchema>,
 ) {
+  if (payload.submissionId) {
+    const existing = await db.report.findUnique({
+      where: {
+        projectId_submissionId: {
+          projectId,
+          submissionId: payload.submissionId,
+        },
+      },
+    });
+    if (existing) return existing;
+  }
   let filename: string | undefined;
   try {
     const image = payload.screenshot
@@ -52,6 +76,7 @@ export async function createReport(
         browser: payload.browser,
         viewport: payload.viewport,
         projectId,
+        submissionId: payload.submissionId,
         events: {
           create: payload.events.map((data, order) => ({
             data,
@@ -75,6 +100,17 @@ export async function createReport(
     return report;
   } catch (e) {
     if (filename) await storage.delete(filename);
+    if (payload.submissionId && (e as { code?: string }).code === "P2002") {
+      const existing = await db.report.findUnique({
+        where: {
+          projectId_submissionId: {
+            projectId,
+            submissionId: payload.submissionId,
+          },
+        },
+      });
+      if (existing) return existing;
+    }
     throw e;
   }
 }
