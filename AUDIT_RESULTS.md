@@ -13,13 +13,15 @@
 - Diagnostics tolerate frozen host APIs, preserve native fetch/XHR behavior, bound outstanding XHR listeners and stop collecting after teardown. Real cross-origin browser coverage exercises fetch, XHR, JavaScript errors and sensitive-field exclusion.
 - Dashboard session failures become visible errors, stale search responses are ignored, pagination clamps after deletion, failed internal notes retain text and show a retryable error, and form mutations guard duplicate clicks.
 - Signed-in demo visitors now report into their own allowed project, with an explicit connect action when no matching project exists. Hosted seeding refuses the published local demo password.
+- The final launch pass prevents a signed-in but unconnected demo from mounting the shared widget. Workspace lookup failures also stop reporting until a successful retry, and anonymous visitors see an explicit shared-workspace notice.
+- Added a branded favicon and a generated 1200×630 social preview with canonical production metadata. The generated image was visually inspected.
 
 ## Executed checks
 
 - Lint and TypeScript: passed after the fixes.
 - Unit/integration suite: 27 passed against a freshly migrated isolated PostgreSQL database.
 - Production build: passed.
-- Browser suite: 15 passed in desktop/mobile Chromium in the final complete local run (15.5 seconds), including strengthened password and ordinary input pixel masking checks.
+- Browser suite: 16 passed in desktop/mobile Chromium in the final complete local run (14.3 seconds), including workspace lookup failure recovery, prevention of shared-owner fallback, and password/ordinary input pixel masking.
 - GitHub Actions passed for the application changes in [PR #7](https://github.com/arslanmuhammad-dev/buglens/actions/runs/39632480044) on Node 22/PostgreSQL 16.
 - Real hosted checks passed at https://buglens-tawny.vercel.app against Neon PostgreSQL and private Vercel Blob: signup, snippet, intentional failure diagnostics, screenshot capture/export/upload, authenticated retrieval, redaction pixels, direct Blob denial, second-user report/image/mutation denial, persisted triage/notes after reload, note deletion, actual asset deletion, external-origin mobile submission, sensitive-field exclusion, invalid origins/keys, malformed/oversized requests, logout and login.
 - Hosted checks use unique fake accounts and clean up their reports/accounts. See `scripts/hosted-smoke.mjs` and DEPLOYMENT.md for the guarded opt-in command and scope.

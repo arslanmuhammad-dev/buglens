@@ -22,6 +22,7 @@ const context = await browser.newContext({
 const page = await context.newPage();
 page.setDefaultTimeout(45000);
 const createdReports = [];
+let publicReportId;
 const emails = [
   `live-${randomUUID()}@example.test`,
   `other-live-${randomUUID()}@example.test`,
@@ -37,6 +38,49 @@ const check = (condition, message) => {
 };
 try {
   await page.goto(base);
+  const shareImage = await page
+    .locator('meta[property="og:image"]')
+    .getAttribute("content");
+  check(
+    new URL(shareImage).origin === origin,
+    "share image uses canonical production origin",
+  );
+  const share = await context.request.get(shareImage);
+  const shareMeta = await sharp(await share.body()).metadata();
+  check(
+    share.ok() && shareMeta.width === 1200 && shareMeta.height === 630,
+    "public social preview is a valid 1200x630 image",
+  );
+  check(
+    (await context.request.get("/icon.svg")).ok(),
+    "branded favicon is public",
+  );
+  await page.goto(base + "/demo");
+  await expect(
+    page.getByText("Reports go to a shared demo workspace.", { exact: false }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Report a problem", exact: true })
+    .click();
+  await page
+    .getByLabel("Title *", { exact: true })
+    .fill("Anonymous public demo verification");
+  await page
+    .getByLabel("Description *", { exact: true })
+    .fill("Fake-data public demo smoke test");
+  const publicSubmission = page.waitForResponse(
+    (r) =>
+      r.url() === origin + "/api/ingest" && r.request().method() === "POST",
+  );
+  await page.getByRole("button", { name: "Send report" }).click();
+  await expect(page.getByRole("status")).toContainText("Report sent");
+  const publicResponse = await publicSubmission;
+  publicReportId = (await publicResponse.json()).id;
+  check(
+    publicResponse.status() === 201 && Boolean(publicReportId),
+    "anonymous public demo accepts a screenshot-free report",
+  );
+  await page.goto(base);
   await page.getByRole("button", { name: "Create an account" }).click();
   await page.getByLabel("Name", { exact: true }).fill("Live verification");
   await page.getByLabel("Email address").fill(emails[0]);
@@ -46,6 +90,21 @@ try {
     .click();
   await page.getByRole("heading", { name: "The whole picture." }).waitFor();
   console.log("PASS HTTPS signup and authenticated session");
+  await page.goto(base + "/demo");
+  await expect(
+    page.getByRole("button", { name: "Connect demo to my workspace" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Report a problem", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Place order", exact: true }),
+  ).toBeDisabled();
+  console.log(
+    "PASS unconnected signed-in demo cannot submit to the shared owner",
+  );
+  await page.goto(base);
+  await page.getByRole("heading", { name: "The whole picture." }).waitFor();
   await page.getByRole("button", { name: "New project" }).click();
   await page.getByLabel("Project name").fill("Live verification store");
   await page
@@ -358,6 +417,14 @@ try {
     .catch(() => {});
   throw error;
 } finally {
+  if (publicReportId)
+    await db.report.deleteMany({
+      where: {
+        id: publicReportId,
+        project: { key: "buglens-demo-public" },
+        screenshot: null,
+      },
+    });
   for (const id of createdReports)
     await context.request
       .delete("/api/reports/" + id, { headers: { origin } })

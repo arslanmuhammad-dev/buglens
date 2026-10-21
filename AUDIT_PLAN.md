@@ -8,3 +8,9 @@
 6. Prepare an honest LinkedIn launch post using the verified hosted URL and test results. Publish/schedule only when the deployment passes live checks and the requested account/time are available.
 
 No audit can guarantee absence of all bugs. Record executed coverage, open risks and deployment blockers explicitly.
+
+## Final public launch pass
+
+1. Verify current production and main-branch CI, then prevent unconnected signed-in demo reports from falling back to the shared demo owner.
+2. Explain anonymous demo ownership and fail closed when workspace lookup fails; add branded share metadata/image and a favicon.
+3. Run regression checks, build and visually inspect the share image. Release the tested revision, verify the hosted reporting flow and keep LinkedIn publication pending draft review.

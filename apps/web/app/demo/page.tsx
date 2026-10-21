@@ -1,10 +1,14 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 export default function Demo() {
   const [message, setMessage] = useState("");
   const [interactive, setInteractive] = useState(false);
   const [workspaceName, setWorkspaceName] = useState("");
   const [canConnect, setCanConnect] = useState(false);
+  const [publicDemo, setPublicDemo] = useState(false);
+  const [setupError, setSetupError] = useState("");
+  const [connecting, setConnecting] = useState(false);
+  const connectingRef = useRef(false);
   useEffect(() => {
     let cancelled = false;
     let script: HTMLScriptElement | undefined;
@@ -24,10 +28,21 @@ export default function Demo() {
           if (project) {
             key = project.key;
             if (!cancelled) setWorkspaceName(project.name);
-          } else if (!cancelled) setCanConnect(true);
+          } else {
+            if (!cancelled) setCanConnect(true);
+            return;
+          }
+        } else if (response.status === 401) {
+          if (!cancelled) setPublicDemo(true);
+        } else {
+          throw Error("Workspace lookup failed");
         }
       } catch {
-        /* Anonymous visitors can still try the public demo widget. */
+        if (!cancelled)
+          setSetupError(
+            "We could not verify your reporting workspace. Reload to retry.",
+          );
+        return;
       }
       if (cancelled) return;
       document
@@ -60,6 +75,9 @@ export default function Demo() {
     };
   }, []);
   async function connect() {
+    if (connectingRef.current) return;
+    connectingRef.current = true;
+    setConnecting(true);
     try {
       const response = await fetch("/api/projects", {
         method: "POST",
@@ -73,6 +91,9 @@ export default function Demo() {
       location.reload();
     } catch {
       setMessage("Could not connect the demo. Please retry.");
+    } finally {
+      connectingRef.current = false;
+      setConnecting(false);
     }
   }
 
@@ -95,9 +116,33 @@ export default function Demo() {
           </span>
         )}
         {canConnect && (
-          <button className="link" onClick={() => void connect()}>
-            Connect demo to my workspace ↗
-          </button>
+          <span>
+            {" "}
+            Connect your workspace before reporting.{" "}
+            <button
+              className="link"
+              disabled={connecting}
+              onClick={() => void connect()}
+            >
+              {connecting ? "Connecting…" : "Connect demo to my workspace ↗"}
+            </button>
+          </span>
+        )}
+        {publicDemo && (
+          <span>
+            {" "}
+            Reports go to a shared demo workspace.{" "}
+            <a href="/">Sign in to track your own reports ↗</a>
+          </span>
+        )}
+        {setupError && (
+          <span role="alert">
+            {" "}
+            {setupError}{" "}
+            <button className="link" onClick={() => location.reload()}>
+              Reload demo
+            </button>
+          </span>
         )}
       </div>
       <section className="product">

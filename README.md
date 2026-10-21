@@ -35,7 +35,7 @@ Create a project, enter exact allowed origins (including scheme and port, withou
 ></script>
 ```
 
-Public keys identify a project; they are not authentication credentials. The demo connects signed-in users to their own project when its allowed origins include the current host. Users without a project can click “Connect demo to my workspace”. Anonymous visitors use `buglens-demo-public` and the optional seeded Form & Field project; these anonymous demo reports belong to its seeded owner. For embedding on a different site, allow its origin in Projects. Serve the widget/API over HTTPS when the host uses HTTPS. CSP must permit the script and API connection.
+Public keys identify a project; they are not authentication credentials. The demo connects signed-in users to their own project when its allowed origins include the current host. Signed-in users without a matching project must click “Connect demo to my workspace” before reporting; workspace lookup failures stop the widget until retry. Anonymous visitors see an explicit shared-workspace notice. Anonymous visitors use `buglens-demo-public` and the optional seeded Form & Field project; these anonymous demo reports belong to its seeded owner. For embedding on a different site, allow its origin in Projects. Serve the widget/API over HTTPS when the host uses HTTPS. CSP must permit the script and API connection.
 
 ## Architecture and decisions
 

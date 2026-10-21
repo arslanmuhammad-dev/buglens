@@ -8,17 +8,17 @@ Executed on 21 October 2026. Local checks used Node 25.2.1, PostgreSQL 14 and Ch
 | `npm run typecheck`                    | Passed                                    |
 | `npm test` with guarded test database  | 27 passed, no skips                       |
 | `npm run build` (webpack)              | Passed                                    |
-| Chromium E2E suite                     | 15 passed, including mobile core workflow |
+| Chromium E2E suite                     | 16 passed, including mobile core workflow |
 | `npm audit --omit=dev`                 | Zero advisories                           |
 | Fresh test database migration and seed | Passed                                    |
 | Vercel production build and migrations | Passed                                    |
 | Opt-in real hosted acceptance script   | Passed; see DEPLOYMENT.md                 |
 
-The final complete local browser run took 15.5 seconds. Tests use a separate `buglens_test` database, temporary screenshot directory, unique fake accounts, local error endpoints and retained failure traces/screenshots. Reset guards reject non-test databases. Test fixtures clear only test-database rate counters between scenarios; production rate limits remain enabled.
+The final complete local browser run took 14.3 seconds. Tests use a separate `buglens_test` database, temporary screenshot directory, unique fake accounts, local error endpoints and retained failure traces/screenshots. Reset guards reject non-test databases. Test fixtures clear only test-database rate counters between scenarios; production rate limits remain enabled.
 
 ## Coverage
 
-The fifteen browser scenarios bundle the requested functionality:
+The sixteen browser scenarios bundle the requested functionality:
 
 - Signup, project creation and installation snippet.
 - Widget loading, keyboard navigation, native required-field validation and style isolation.
