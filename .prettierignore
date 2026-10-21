@@ -1,0 +1,4 @@
+node_modules
+apps/web/.next
+apps/web/public/widget.js
+package-lock.json
