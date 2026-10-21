@@ -1,5 +1,7 @@
 # Launch audit findings and verification
 
+This records the 21 October launch audit. The [22 October regression round](QA_ROUND_2026-10-22.md) adds dashboard response-order/navigation/filter fixes, screenshot recovery fixes and seven browser scenarios (23 total).
+
 ## Fixed findings
 
 - Strict resource/subresource routing: unknown report actions no longer fall through to report reads, deletion or triage operations. Unsupported verbs return 405.

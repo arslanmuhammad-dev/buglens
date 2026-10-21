@@ -68,6 +68,17 @@ try {
   await page
     .getByLabel("Description *", { exact: true })
     .fill("Fake-data public demo smoke test");
+  await page
+    .getByRole("button", { name: "Capture screenshot", exact: true })
+    .click();
+  await expect(page.getByLabel("Screenshot annotation canvas")).toBeVisible();
+  await page.getByLabel("X", { exact: true }).fill("-1");
+  await page
+    .getByRole("button", { name: "Remove screenshot", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Capture screenshot", exact: true }),
+  ).toBeVisible();
   const publicSubmission = page.waitForResponse(
     (r) =>
       r.url() === origin + "/api/ingest" && r.request().method() === "POST",
@@ -401,6 +412,8 @@ try {
     missing = e?.name === "BlobNotFoundError";
   }
   check(missing, "actual private Blob is removed on report deletion");
+  await page.getByRole("button", { name: "Bug reports" }).click();
+  await page.getByLabel("Filter severity").selectOption("HIGH");
   await page.getByRole("button", { name: "Sign out" }).click();
   await page.getByRole("button", { name: "Sign in", exact: true }).waitFor();
   check(
@@ -411,6 +424,11 @@ try {
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.getByRole("heading", { name: "The whole picture." }).waitFor();
+  await expect(page.getByLabel("Filter severity")).toHaveValue("");
+  await expect(
+    page.getByRole("button", { name: "Mobile external host", exact: true }),
+  ).toBeVisible();
+  console.log("PASS hosted login resets workspace filters");
   console.log("PASS hosted login after logout");
   console.log("Hosted acceptance checks completed. Only fake data was used.");
 } catch (error) {

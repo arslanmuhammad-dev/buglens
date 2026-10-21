@@ -55,6 +55,17 @@ export default function Dashboard() {
     [projectForm, setProjectForm] = useState(false),
     [editing, setEditing] = useState<Project | null>(null);
   const refreshVersion = useRef(0);
+  const filters = useRef({
+    page: 1,
+    query: "",
+    project: "",
+    status: "",
+    severity: "",
+  });
+  const selection = useRef<{ id: string | null; version: number }>({
+    id: null,
+    version: 0,
+  });
   const actionPending = useRef(false);
   const [busy, setBusy] = useState(false);
   async function runAction(action: () => Promise<void>) {
@@ -74,6 +85,7 @@ export default function Dashboard() {
     }
   }
   async function refresh() {
+    const { page, query, project, status, severity } = filters.current;
     const version = ++refreshVersion.current;
     try {
       const [ps, data] = await Promise.all([
@@ -120,20 +132,30 @@ export default function Dashboard() {
       });
   }, []);
   useEffect(() => {
+    filters.current = { page, query, project, status, severity };
     if (user) void refresh();
   }, [user, page, query, project, status, severity]);
-  async function detail(id: string) {
+  function leaveReport() {
+    selection.current.id = null;
+    selection.current.version++;
+    setSelected(null);
+  }
+  async function detail(id: string, refreshOnly = false) {
+    if (refreshOnly && selection.current.id !== id) return;
+    selection.current.id = id;
+    const version = ++selection.current.version;
     try {
-      setSelected(await api("reports/" + id));
+      const report = await api("reports/" + id);
+      if (version === selection.current.version) setSelected(report);
     } catch (e) {
-      setError((e as Error).message);
+      if (version === selection.current.version) setError((e as Error).message);
     }
   }
   async function change(data: object) {
     if (!selected) return;
     await runAction(async () => {
       await api("reports/" + selected.id, "PATCH", data);
-      await detail(selected.id);
+      await detail(selected.id, true);
       await refresh();
     });
   }
@@ -268,7 +290,7 @@ export default function Dashboard() {
           className={tab === "reports" ? "nav active" : "nav"}
           onClick={() => {
             setTab("reports");
-            setSelected(null);
+            leaveReport();
           }}
         >
           ▤ <span>Bug reports</span>
@@ -278,7 +300,7 @@ export default function Dashboard() {
           className={tab === "projects" ? "nav active" : "nav"}
           onClick={() => {
             setTab("projects");
-            setSelected(null);
+            leaveReport();
           }}
         >
           ▧ <span>Projects</span>
@@ -301,9 +323,18 @@ export default function Dashboard() {
               await runAction(async () => {
                 await api("auth/sign-out", "POST", {});
                 refreshVersion.current++;
-                setSelected(null);
+                leaveReport();
                 setProjects([]);
                 setReports([]);
+                setTotal(0);
+                setPage(1);
+                setQuery("");
+                setProject("");
+                setStatus("");
+                setSeverity("");
+                setTab("reports");
+                setProjectForm(false);
+                setEditing(null);
                 setUser(null);
               });
             }}
@@ -333,7 +364,7 @@ export default function Dashboard() {
           </p>
           {selected ? (
             <>
-              <button className="link" onClick={() => setSelected(null)}>
+              <button className="link" onClick={leaveReport}>
                 ← All reports
               </button>
               <div className="page-heading">
@@ -354,7 +385,7 @@ export default function Dashboard() {
                     if (confirm("Delete this report and its screenshot?")) {
                       await runAction(async () => {
                         await api("reports/" + selected.id, "DELETE");
-                        setSelected(null);
+                        if (selection.current.id === selected.id) leaveReport();
                         await refresh();
                       });
                     }
@@ -421,7 +452,7 @@ export default function Dashboard() {
                                 `reports/${selected.id}/notes?note=${n.id}`,
                                 "DELETE",
                               );
-                              await detail(selected.id);
+                              await detail(selected.id, true);
                             });
                           }}
                         >
@@ -439,7 +470,7 @@ export default function Dashboard() {
                             body,
                           });
                           form.reset();
-                          await detail(selected.id);
+                          await detail(selected.id, true);
                         });
                       }}
                     >
