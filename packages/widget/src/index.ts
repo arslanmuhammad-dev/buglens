@@ -15,7 +15,7 @@ export function mount(key: string, base: string) {
     });
   });
   root.innerHTML = `<style>
-:host{all:initial;font-family:Inter,system-ui,sans-serif;color:#192123;font-size:14px}*{box-sizing:border-box}button,input,textarea,select{font:inherit}button{cursor:pointer;border:0;border-radius:9px;padding:11px 15px;background:#eaf1ef;color:#173d35}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #48b99a;outline-offset:2px}.launch{position:fixed;bottom:24px;right:24px;z-index:2147483646;background:#153e34;color:white;box-shadow:0 6px 26px #0003}.backdrop{position:fixed;inset:0;background:#102e2966;z-index:2147483647;display:flex;justify-content:flex-end;padding:18px}.panel{background:#fff;width:470px;max-width:100%;padding:25px;overflow:auto;border-radius:16px;box-shadow:0 20px 80px #0003}h2{font-size:23px;margin:5px 0}p{line-height:1.6;color:#65716d}label{display:block;margin:15px 0 6px;font-weight:600}input:not([type=checkbox]),textarea{width:100%;padding:11px;border:1px solid #d5ded9;border-radius:8px;background:#fcfdfc}textarea{min-height:65px;resize:vertical}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.primary{background:#163f34;color:#fff}.close{float:right}pre{white-space:pre-wrap;word-break:break-word;background:#f2f5f3;padding:12px;max-height:220px;overflow:auto;font:11px monospace}canvas{max-width:100%;height:auto;border:1px solid #b4c8bf;touch-action:none} .status{padding:10px 0;color:#9e3929}[hidden]{display:none!important}small{color:#65716d}</style><button class="launch" aria-label="Report a problem">◉ &nbsp; Report a problem</button><div class="backdrop" hidden><section class="panel" role="dialog" aria-modal="true" aria-labelledby="bl-title"><button class="close" aria-label="Close report">✕</button><small>BUGLENS · FEEDBACK WITH CONTEXT</small><h2 id="bl-title">What went wrong?</h2><p>Tell us what happened. We’ll include the useful details, with your permission.</p><form><label for="title">Title *</label><input id="title" required maxlength="160" placeholder="e.g. Checkout won’t complete"><label for="description">Description *</label><textarea id="description" required maxlength="4000"></textarea><label for="steps">Steps to reproduce</label><textarea id="steps" maxlength="4000"></textarea><label for="expected">Expected behavior</label><textarea id="expected" maxlength="4000"></textarea><label><input id="diagnostics" type="checkbox" checked> Include sanitized diagnostics</label><div class="row"><button type="button" id="capture">Capture screenshot</button><button type="button" id="remove" hidden>Remove screenshot</button></div><p><small>Capture is optional. Inputs and marked private areas are masked. Draw a highlight or an opaque redaction below.</small></p><div id="editor" hidden><div class="row"><label for="tool">Annotation</label><select id="tool"><option value="highlight">Highlight</option><option value="redact">Redact</option></select></div><canvas aria-label="Screenshot annotation canvas" tabindex="0"></canvas><small>Drag to mark an area, or enter pixel coordinates below. Redactions are burned into the image.</small><div class="row"><label>X<input id="ax" type="number" min="0" value="20"></label><label>Y<input id="ay" type="number" min="0" value="20"></label><label>Width<input id="aw" type="number" min="1" value="100"></label><label>Height<input id="ah" type="number" min="1" value="60"></label><button type="button" id="apply-annotation">Apply annotation</button></div></div><details><summary>Preview exact report payload</summary><pre id="preview"></pre></details><div class="status" role="status" aria-live="polite"></div><button class="primary" type="submit">Send report ↗</button></form></section></div>`;
+:host{all:initial;font-family:Inter,system-ui,sans-serif;color:#192123;font-size:14px}*{box-sizing:border-box}button,input,textarea,select{font:inherit}button{cursor:pointer;border:0;border-radius:9px;padding:11px 15px;background:#eaf1ef;color:#173d35}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #48b99a;outline-offset:2px}.launch{position:fixed;bottom:24px;right:24px;z-index:2147483646;background:#153e34;color:white;box-shadow:0 6px 26px #0003}.backdrop{position:fixed;inset:0;background:#102e2966;z-index:2147483647;display:flex;justify-content:flex-end;padding:18px}.panel{background:#fff;width:470px;max-width:100%;padding:25px;overflow:auto;border-radius:16px;box-shadow:0 20px 80px #0003}h2{font-size:23px;margin:5px 0}p{line-height:1.6;color:#65716d}label{display:block;margin:15px 0 6px;font-weight:600}input:not([type=checkbox]),textarea{width:100%;padding:11px;border:1px solid #d5ded9;border-radius:8px;background:#fcfdfc}textarea{min-height:65px;resize:vertical}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.primary{background:#163f34;color:#fff}.close{float:right}pre{white-space:pre-wrap;word-break:break-word;background:#f2f5f3;padding:12px;max-height:220px;overflow:auto;font:11px monospace}canvas{max-width:100%;height:auto;border:1px solid #b4c8bf;touch-action:none} .status{padding:10px 0;color:#9e3929}[hidden]{display:none!important}small{color:#65716d}</style><button class="launch" aria-label="Report a problem">◉ &nbsp; Report a problem</button><div class="backdrop" hidden><section class="panel" role="dialog" aria-modal="true" aria-labelledby="bl-title"><button class="close" aria-label="Close report">✕</button><small>BUGLENS · FEEDBACK WITH CONTEXT</small><h2 id="bl-title">What went wrong?</h2><p>Tell us what happened. We’ll include the useful details, with your permission.</p><form><label for="title">Title *</label><input id="title" required maxlength="160" placeholder="e.g. Checkout won’t complete"><label for="description">Description *</label><textarea id="description" required maxlength="4000"></textarea><label for="steps">Steps to reproduce</label><textarea id="steps" maxlength="4000"></textarea><label for="expected">Expected behavior</label><textarea id="expected" maxlength="4000"></textarea><fieldset><legend>Stay in touch (optional)</legend><label for="reporter-name">Your name</label><input id="reporter-name" maxlength="100" autocomplete="name"><label for="reporter-email">Your email</label><input id="reporter-email" type="email" maxlength="254" autocomplete="email"><small>Only shared with this project’s team if you enter it. Email delivery is not enabled. Save your private tracking link after sending to see replies.</small></fieldset><label><input id="diagnostics" type="checkbox" checked> Include sanitized diagnostics</label><div class="row"><button type="button" id="capture">Capture screenshot</button><button type="button" id="remove" hidden>Remove screenshot</button></div><p><small>Capture is optional. Inputs and marked private areas are masked. Draw a highlight or an opaque redaction below.</small></p><div id="editor" hidden><div class="row"><label for="tool">Annotation</label><select id="tool"><option value="highlight">Highlight</option><option value="redact">Redact</option></select></div><canvas aria-label="Screenshot annotation canvas" tabindex="0"></canvas><small>Drag to mark an area, or enter pixel coordinates below. Redactions are burned into the image.</small><div class="row"><label>X<input id="ax" type="number" min="0" value="20"></label><label>Y<input id="ay" type="number" min="0" value="20"></label><label>Width<input id="aw" type="number" min="1" value="100"></label><label>Height<input id="ah" type="number" min="1" value="60"></label><button type="button" id="apply-annotation">Apply annotation</button></div></div><details><summary>Preview exact report payload</summary><pre id="preview"></pre></details><div class="status" role="status" aria-live="polite"></div><p id="tracking-result" hidden></p><button class="primary" type="submit">Send report ↗</button></form></section></div>`;
   const $ = <T extends HTMLElement = HTMLElement>(s: string) =>
     root.querySelector<T>(s)!;
   const backdrop = $(".backdrop");
@@ -29,11 +29,24 @@ export function mount(key: string, base: string) {
   let capturing = false;
   let destroyed = false;
   let submissionId = crypto.randomUUID();
+  const makeToken = () =>
+    btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32))))
+      .replaceAll("+", "-")
+      .replaceAll("/", "_")
+      .replaceAll("=", "");
+  let trackingToken = makeToken();
   let reviewPayload: ReturnType<typeof payload> | null = null;
   function payload() {
     const value = (id: string) => $<HTMLInputElement>("#" + id).value;
     return {
       submissionId,
+      trackingToken,
+      ...(value("reporter-name").trim()
+        ? { reporterName: value("reporter-name").trim() }
+        : {}),
+      ...(value("reporter-email").trim()
+        ? { reporterEmail: value("reporter-email").trim() }
+        : {}),
       projectKey: key,
       title: value("title"),
       description: value("description"),
@@ -92,7 +105,7 @@ export function mount(key: string, base: string) {
     if (e.key === "Tab") {
       const focusable = [
         ...root.querySelectorAll<HTMLElement>(
-          "button,input,textarea,select,summary,canvas",
+          "button,input,textarea,select,summary,canvas,a",
         ),
       ].filter(
         (el) =>
@@ -289,8 +302,23 @@ export function mount(key: string, base: string) {
       const result = await res.json();
       if (!res.ok || typeof result.id !== "string") throw Error();
       status.textContent = "Report sent. Thank you for helping us improve!";
+      const tracking = $("#tracking-result");
+      const link = document.createElement("a");
+      link.href =
+        new URL("/track/" + encodeURIComponent(result.id), base).href +
+        "#" +
+        trackingToken;
+      link.textContent = "Open your private report conversation ↗";
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      tracking.replaceChildren(
+        "Save this link to see status updates and reply. Anyone with this link can access the conversation. Expires in 90 days. ",
+        link,
+      );
+      tracking.hidden = false;
       form.reset();
       submissionId = crypto.randomUUID();
+      trackingToken = makeToken();
       clearScreenshot();
       preview();
     } catch {

@@ -1,8 +1,23 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-type Project = { id: string; name: string; key: string; origins: string[] };
+import { Conversation } from "../components/conversation";
+import {
+  NotificationInbox,
+  TeamSettings,
+} from "../components/workspace-communication";
+type Project = {
+  id: string;
+  name: string;
+  key: string;
+  origins: string[];
+  ownerId: string;
+};
 type Report = {
   id: string;
+  reporterName: string | null;
+  reporterEmail: string | null;
+  trackingHash: string | null;
+  trackingExpiresAt: string | null;
   title: string;
   description: string;
   steps: string;
@@ -38,7 +53,7 @@ async function api(path: string, method = "GET", data?: unknown) {
 }
 const label = (s: string) => s.toLowerCase().replaceAll("_", " ");
 export default function Dashboard() {
-  const [user, setUser] = useState<{ name: string } | null>(null),
+  const [user, setUser] = useState<{ id: string; name: string } | null>(null),
     [ready, setReady] = useState(false),
     [signup, setSignup] = useState(false),
     [error, setError] = useState(""),
@@ -354,6 +369,12 @@ export default function Dashboard() {
                 : "Projects"}
           </span>
           <div>
+            <NotificationInbox
+              openReport={(id) => {
+                setTab("reports");
+                void detail(id);
+              }}
+            />
             <span className="live-dot" /> Private workspace{" "}
             <span className="avatar small-avatar">{user.name[0]}</span>
           </div>
@@ -380,6 +401,7 @@ export default function Dashboard() {
                 </div>
                 <button
                   disabled={busy}
+                  hidden={selected.project.ownerId !== user.id}
                   className="danger"
                   onClick={async () => {
                     if (confirm("Delete this report and its screenshot?")) {
@@ -439,6 +461,60 @@ export default function Dashboard() {
                       <p>No diagnostics included.</p>
                     )}
                   </section>
+                  <section className="card">
+                    <h3>Reporter</h3>
+                    <p>{selected.reporterName || "Anonymous reporter"}</p>
+                    <p>
+                      {selected.reporterEmail
+                        ? selected.reporterEmail +
+                          " (provided by reporter; unverified)"
+                        : "No email provided."}
+                    </p>
+                    <p>
+                      Contact details are supplied voluntarily. Email updates
+                      are not enabled.
+                    </p>
+                    <p>
+                      {selected.trackingHash && selected.trackingExpiresAt
+                        ? "Private conversation link expires " +
+                          new Date(
+                            selected.trackingExpiresAt,
+                          ).toLocaleDateString()
+                        : "No active reporter tracking link."}
+                    </p>
+                    {selected.trackingHash &&
+                      selected.project.ownerId === user.id && (
+                        <button
+                          className="danger"
+                          disabled={busy}
+                          onClick={() => {
+                            if (
+                              confirm(
+                                "Revoke the reporter’s tracking link? This cannot be undone.",
+                              )
+                            )
+                              void runAction(async () => {
+                                await api(
+                                  `reports/${selected.id}/tracking`,
+                                  "DELETE",
+                                );
+                                await detail(selected.id, true);
+                              });
+                          }}
+                        >
+                          Revoke tracking link
+                        </button>
+                      )}
+                  </section>
+                  <Conversation
+                    key={selected.id}
+                    reportId={selected.id}
+                    active={Boolean(
+                      selected.trackingHash &&
+                      selected.trackingExpiresAt &&
+                      new Date(selected.trackingExpiresAt) > new Date(),
+                    )}
+                  />
                   <section className="card">
                     <h3>Internal notes</h3>
                     {selected.notes.map((n) => (
@@ -579,6 +655,7 @@ export default function Dashboard() {
                     <h2>{p.name}</h2>
                     <p>{p.origins.join(", ")}</p>
                     <button
+                      hidden={p.ownerId !== user.id}
                       className="link"
                       onClick={() => {
                         setEditing(p);
@@ -587,6 +664,10 @@ export default function Dashboard() {
                     >
                       Manage origins ↗
                     </button>
+                    <p className="muted">
+                      {p.ownerId === user.id ? "Owner" : "Developer access"}
+                    </p>
+                    {p.ownerId === user.id && <TeamSettings projectId={p.id} />}
                     <h4>Install your widget</h4>
                     <pre className="snippet">{`<script src="${location.origin}/widget.js" data-project-key="${p.key}" defer></script>`}</pre>
                     <button

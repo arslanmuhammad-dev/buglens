@@ -1063,3 +1063,122 @@ dd {
     font-size: 11px;
   }
 }
+
+/* Customer conversations and project collaboration */
+.tracking-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  min-height: 100vh;
+}
+.tracking-page > .brand {
+  display: inline-block;
+  margin-bottom: 48px;
+}
+.tracking-page h1 {
+  overflow-wrap: anywhere;
+}
+.tracking-page .card {
+  margin: 24px 0;
+}
+.tracking-page .secondary {
+  margin: 8px 8px 0 0;
+}
+.messages {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+.messages li {
+  padding: 16px 18px;
+  border: 1px solid #dae5dc;
+  border-radius: 12px;
+  background: #f6f8f4;
+  overflow-wrap: anywhere;
+}
+.messages .developer-message {
+  background: #edf5ee;
+  border-left: 3px solid #347956;
+}
+.messages small,
+.notification-panel small {
+  display: block;
+  color: #718076;
+  margin-top: 4px;
+}
+.conversation textarea {
+  min-height: 100px;
+}
+.notification-inbox {
+  position: relative;
+  display: inline-block;
+  margin-right: 16px;
+}
+.notification-panel {
+  position: absolute;
+  right: 0;
+  top: 44px;
+  width: min(410px, 85vw);
+  max-height: 70vh;
+  overflow: auto;
+  z-index: 100;
+  box-shadow: 0 12px 40px #172c2426;
+}
+.notification-panel ul {
+  list-style: none;
+  padding: 0;
+}
+.notification-panel li {
+  padding: 12px 0;
+  border-bottom: 1px solid #e2e9e2;
+}
+.notification-panel .link {
+  text-align: left;
+  white-space: normal;
+}
+.team-settings {
+  margin: 16px 0;
+  padding: 16px 0;
+  border-top: 1px solid #e1e8e0;
+}
+.team-settings section {
+  margin-top: 20px;
+}
+.invite-result {
+  padding: 12px;
+  background: #f2f7ef;
+  margin-top: 16px;
+  border-radius: 10px;
+}
+.tracking-page p {
+  overflow-wrap: anywhere;
+}
+.row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+@media (max-width: 700px) {
+  .tracking-page {
+    padding: 24px 16px;
+  }
+  .notification-inbox {
+    margin: 0;
+  }
+  .main header > div {
+    flex-wrap: wrap;
+  }
+  .notification-panel {
+    position: fixed;
+    left: 5vw;
+    right: 5vw;
+    top: 90px;
+    width: 90vw;
+  }
+  .conversation .section-heading {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
