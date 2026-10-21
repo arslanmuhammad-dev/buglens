@@ -25,10 +25,14 @@ export function mount(key: string, base: string) {
   const canvas = $<HTMLCanvasElement>("canvas");
   let screenshot: string | null = null;
   let pending = false;
+  let capturing = false;
+  let destroyed = false;
+  let submissionId = crypto.randomUUID();
   let reviewPayload: ReturnType<typeof payload> | null = null;
   function payload() {
     const value = (id: string) => $<HTMLInputElement>("#" + id).value;
     return {
+      submissionId,
       projectKey: key,
       title: value("title"),
       description: value("description"),
@@ -52,6 +56,7 @@ export function mount(key: string, base: string) {
     };
   }
   function preview() {
+    if (destroyed) return;
     reviewPayload = payload();
     $("#preview").textContent = JSON.stringify(reviewPayload, null, 2);
   }
@@ -96,10 +101,18 @@ export function mount(key: string, base: string) {
   form.oninput = preview;
   $("details").addEventListener("toggle", preview);
   $("#capture").onclick = async () => {
+    if (pending || capturing || destroyed) return;
+    capturing = true;
     const button = $<HTMLButtonElement>("#capture");
+    $<HTMLButtonElement>("button[type=submit]").disabled = true;
     button.disabled = true;
     status.textContent = "Capturing…";
     host.style.visibility = "hidden";
+    const privateRects = [
+      ...document.querySelectorAll<HTMLElement>(
+        "input,textarea,select,[contenteditable],[data-buglens-private],[data-buglens-private] *",
+      ),
+    ].map((el) => el.getBoundingClientRect());
     try {
       const captured = await html2canvas(document.body, {
         scale: Math.min(1, 1200 / innerWidth),
@@ -125,22 +138,35 @@ export function mount(key: string, base: string) {
             el.style.setProperty("background", "#263c35", "important");
             el.style.setProperty("background-image", "none", "important");
             el.style.setProperty("font-size", "0", "important");
-            if (el instanceof HTMLInputElement) {
+            if (el.tagName === "INPUT") {
               el.removeAttribute("src");
-              el.placeholder = "";
+              (el as HTMLInputElement).placeholder = "";
             }
             el.style.setProperty("color", "transparent", "important");
             el.style.setProperty("text-shadow", "none", "important");
-            if (el instanceof HTMLInputElement) el.value = "";
-            else if (el instanceof HTMLTextAreaElement) el.value = "";
+            if (el.tagName === "INPUT")
+              (el as HTMLInputElement | HTMLTextAreaElement).value = "";
+            else if (el.tagName === "TEXTAREA")
+              (el as HTMLInputElement | HTMLTextAreaElement).value = "";
             else el.replaceChildren();
             el.style.setProperty("opacity", "1", "important");
           }
         },
       });
+      if (destroyed) return;
       canvas.width = captured.width;
       canvas.height = captured.height;
-      canvas.getContext("2d")!.drawImage(captured, 0, 0);
+      const context = canvas.getContext("2d")!;
+      context.drawImage(captured, 0, 0);
+      context.fillStyle = "#263c35";
+      const scale = canvas.width / innerWidth;
+      for (const rect of privateRects)
+        context.fillRect(
+          Math.floor(rect.left * scale),
+          Math.floor(rect.top * scale),
+          Math.ceil(rect.width * scale) + 1,
+          Math.ceil(rect.height * scale) + 1,
+        );
       screenshot = canvas.toDataURL("image/png");
       $("#editor").hidden = false;
       $("#remove").hidden = false;
@@ -153,6 +179,8 @@ export function mount(key: string, base: string) {
     } finally {
       host.style.visibility = "";
       button.disabled = false;
+      capturing = false;
+      $<HTMLButtonElement>("button[type=submit]").disabled = pending;
     }
   };
   $("#remove").onclick = () => {
@@ -184,6 +212,9 @@ export function mount(key: string, base: string) {
     preview();
   };
   let start: { x: number; y: number } | null = null;
+  canvas.onpointercancel = () => {
+    start = null;
+  };
   const point = (e: PointerEvent) => {
     const rect = canvas.getBoundingClientRect();
     return {
@@ -217,7 +248,7 @@ export function mount(key: string, base: string) {
   };
   form.onsubmit = async (e) => {
     e.preventDefault();
-    if (pending || !form.reportValidity()) return;
+    if (pending || capturing || destroyed || !form.reportValidity()) return;
     preview();
     if (!payloadSchema.safeParse(reviewPayload).success) {
       status.textContent =
@@ -226,6 +257,15 @@ export function mount(key: string, base: string) {
     }
     pending = true;
     const submit = $<HTMLButtonElement>("button[type=submit]");
+    const controls = [
+      ...form.querySelectorAll<
+        | HTMLInputElement
+        | HTMLButtonElement
+        | HTMLSelectElement
+        | HTMLTextAreaElement
+      >("input,textarea,select,button"),
+    ];
+    for (const control of controls) control.disabled = true;
     submit.disabled = true;
     status.textContent = "Sending report…";
     try {
@@ -234,9 +274,11 @@ export function mount(key: string, base: string) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(reviewPayload),
       });
-      if (!res.ok) throw Error();
+      const result = await res.json();
+      if (!res.ok || typeof result.id !== "string") throw Error();
       status.textContent = "Report sent. Thank you for helping us improve!";
       form.reset();
+      submissionId = crypto.randomUUID();
       screenshot = null;
       $("#editor").hidden = true;
       $("#remove").hidden = true;
@@ -246,11 +288,13 @@ export function mount(key: string, base: string) {
         "Could not send report. Your details are saved here. Please retry.";
     } finally {
       pending = false;
+      for (const control of controls) control.disabled = false;
       submit.disabled = false;
     }
   };
   return {
     destroy() {
+      destroyed = true;
       diagnostics.destroy();
       host.remove();
     },
@@ -261,7 +305,12 @@ if (
   !document.getElementById("buglens-widget-root")
 ) {
   try {
-    mount(script.dataset.projectKey, script.src);
+    const widget = mount(script.dataset.projectKey, script.src);
+    document
+      .getElementById("buglens-widget-root")
+      ?.addEventListener("buglens:destroy", () => widget.destroy(), {
+        once: true,
+      });
   } catch {
     /* Never break the host. */
   }
