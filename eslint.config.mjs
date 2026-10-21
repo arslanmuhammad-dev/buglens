@@ -1,6 +1,14 @@
 import tseslint from "typescript-eslint";
 export default tseslint.config(
-  { ignores: ["**/.next/**", "**/public/widget.js", "node_modules/**"] },
+  {
+    ignores: [
+      "**/.next/**",
+      "**/public/widget.js",
+      "node_modules/**",
+      "test-results/**",
+      "playwright-report/**",
+    ],
+  },
   ...tseslint.configs.recommended,
   {
     rules: {

@@ -1,6 +1,6 @@
 # Verification results
 
-Executed on 21 October 2026. Local checks used Node 25.2.1, PostgreSQL 14 and Chromium; GitHub Actions used Node 22 and PostgreSQL 16. Hosted runtime uses Node 22, Neon PostgreSQL and private Vercel Blob.
+Latest regression round: 22 October 2026. See [the round report](QA_ROUND_2026-10-22.md) for reproduced bugs and fixes. Launch-day hosted evidence below is dated 21 October; follow-up deployment evidence is recorded in the regression PR. Local checks used Node 25.2.1, PostgreSQL 14 and Chromium; GitHub Actions used Node 22 and PostgreSQL 16. Hosted runtime uses Node 22, Neon PostgreSQL and private Vercel Blob.
 
 | Check                                  | Actual result                             |
 | -------------------------------------- | ----------------------------------------- |
@@ -8,17 +8,17 @@ Executed on 21 October 2026. Local checks used Node 25.2.1, PostgreSQL 14 and Ch
 | `npm run typecheck`                    | Passed                                    |
 | `npm test` with guarded test database  | 27 passed, no skips                       |
 | `npm run build` (webpack)              | Passed                                    |
-| Chromium E2E suite                     | 16 passed, including mobile core workflow |
+| Chromium E2E suite                     | 23 passed, including mobile core workflow |
 | `npm audit --omit=dev`                 | Zero advisories                           |
 | Fresh test database migration and seed | Passed                                    |
 | Vercel production build and migrations | Passed                                    |
 | Opt-in real hosted acceptance script   | Passed; see DEPLOYMENT.md                 |
 
-The final complete local browser run took 14.3 seconds. Tests use a separate `buglens_test` database, temporary screenshot directory, unique fake accounts, local error endpoints and retained failure traces/screenshots. Reset guards reject non-test databases. Test fixtures clear only test-database rate counters between scenarios; production rate limits remain enabled.
+The final complete local browser run took 36.3 seconds. Tests use a separate `buglens_test` database, temporary screenshot directory, unique fake accounts, local error endpoints and retained failure traces/screenshots. Reset guards reject non-test databases. Test fixtures clear only test-database rate counters between scenarios; production rate limits remain enabled.
 
 ## Coverage
 
-The sixteen browser scenarios bundle the requested functionality:
+The twenty-three browser scenarios bundle the requested functionality:
 
 - Signup, project creation and installation snippet.
 - Widget loading, keyboard navigation, native required-field validation and style isolation.

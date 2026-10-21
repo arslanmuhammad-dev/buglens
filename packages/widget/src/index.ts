@@ -24,6 +24,7 @@ export function mount(key: string, base: string) {
   const status = $(".status");
   const canvas = $<HTMLCanvasElement>("canvas");
   let screenshot: string | null = null;
+  let start: { x: number; y: number } | null = null;
   let pending = false;
   let capturing = false;
   let destroyed = false;
@@ -59,6 +60,18 @@ export function mount(key: string, base: string) {
     if (destroyed) return;
     reviewPayload = payload();
     $("#preview").textContent = JSON.stringify(reviewPayload, null, 2);
+  }
+  function clearScreenshot() {
+    screenshot = null;
+    start = null;
+    canvas.width = canvas.height = 0;
+    $("#editor").hidden = true;
+    $("#remove").hidden = true;
+    $("#capture").textContent = "Capture screenshot";
+    for (const input of root.querySelectorAll<HTMLInputElement>(
+      '#editor input[type="number"]',
+    ))
+      input.value = input.defaultValue;
   }
   function close() {
     if (pending) return;
@@ -108,12 +121,12 @@ export function mount(key: string, base: string) {
     button.disabled = true;
     status.textContent = "Capturing…";
     host.style.visibility = "hidden";
-    const privateRects = [
-      ...document.querySelectorAll<HTMLElement>(
-        "input,textarea,select,[contenteditable],[data-buglens-private],[data-buglens-private] *",
-      ),
-    ].map((el) => el.getBoundingClientRect());
     try {
+      const privateRects = [
+        ...document.querySelectorAll<HTMLElement>(
+          "input,textarea,select,[contenteditable],[data-buglens-private],[data-buglens-private] *",
+        ),
+      ].map((el) => el.getBoundingClientRect());
       const captured = await html2canvas(document.body, {
         scale: Math.min(1, 1200 / innerWidth),
         useCORS: true,
@@ -184,9 +197,9 @@ export function mount(key: string, base: string) {
     }
   };
   $("#remove").onclick = () => {
-    screenshot = null;
-    $("#editor").hidden = true;
-    $("#remove").hidden = true;
+    clearScreenshot();
+    status.textContent =
+      "Screenshot removed. You can send the report without an image.";
     preview();
   };
   $("#apply-annotation").onclick = () => {
@@ -211,7 +224,6 @@ export function mount(key: string, base: string) {
     screenshot = canvas.toDataURL("image/png");
     preview();
   };
-  let start: { x: number; y: number } | null = null;
   canvas.onpointercancel = () => {
     start = null;
   };
@@ -279,9 +291,7 @@ export function mount(key: string, base: string) {
       status.textContent = "Report sent. Thank you for helping us improve!";
       form.reset();
       submissionId = crypto.randomUUID();
-      screenshot = null;
-      $("#editor").hidden = true;
-      $("#remove").hidden = true;
+      clearScreenshot();
       preview();
     } catch {
       status.textContent =
