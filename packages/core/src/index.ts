@@ -38,6 +38,12 @@ export const eventSchema = z
 export const payloadSchema = z
   .object({
     submissionId: z.string().uuid().optional(),
+    trackingToken: z
+      .string()
+      .regex(/^[A-Za-z0-9_-]{43}$/)
+      .optional(),
+    reporterName: z.string().trim().max(100).optional(),
+    reporterEmail: z.string().trim().toLowerCase().email().max(254).optional(),
     projectKey: z.string().min(1).max(100),
     title: z.string().trim().min(1).max(160),
     description: z.string().trim().min(1).max(4000),

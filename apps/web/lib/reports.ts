@@ -1,14 +1,19 @@
+import { projectAccess, hashToken } from "./access";
 import { db } from "./db";
 import { storage, decodeImage } from "./storage";
 export async function ownedReport(id: string, ownerId: string) {
   return db.report.findFirst({
-    where: { id, project: { ownerId } },
+    where: { id, project: projectAccess(ownerId) },
     include: { screenshot: true },
   });
 }
 export async function deleteReport(id: string, ownerId: string) {
   const report = await ownedReport(id, ownerId);
-  if (!report) return false; // Delete asset first: failure retains a retryable database record.
+  if (
+    !report ||
+    !(await db.project.findFirst({ where: { id: report.projectId, ownerId } }))
+  )
+    return false; // Delete asset first: failure retains a retryable database record.
   if (report.screenshot) await storage.delete(report.screenshot.filename);
   await db.report.delete({ where: { id } });
   return true;
@@ -21,7 +26,7 @@ export async function updateTriage(
   return db.$transaction(
     async (tx) => {
       const report = await tx.report.findFirst({
-        where: { id, project: { ownerId } },
+        where: { id, project: projectAccess(ownerId) },
       });
       if (!report) return null;
 
@@ -30,7 +35,16 @@ export async function updateTriage(
         data: {
           ...input,
           ...(input.status && input.status !== report.status
-            ? { history: { create: { status: input.status } } }
+            ? {
+                history: { create: { status: input.status } },
+                notifications: {
+                  create: await notificationRecipients(
+                    report.projectId,
+                    "STATUS_CHANGED",
+                    ownerId,
+                  ),
+                },
+              }
             : {}),
         },
       });
@@ -77,6 +91,17 @@ export async function createReport(
         viewport: payload.viewport,
         projectId,
         submissionId: payload.submissionId,
+        reporterName: payload.reporterName || null,
+        reporterEmail: payload.reporterEmail || null,
+        trackingHash: payload.trackingToken
+          ? hashToken(payload.trackingToken)
+          : null,
+        trackingExpiresAt: payload.trackingToken
+          ? new Date(Date.now() + 90 * 86400000)
+          : null,
+        notifications: {
+          create: await notificationRecipients(projectId, "NEW_REPORT"),
+        },
         events: {
           create: payload.events.map((data, order) => ({
             data,
@@ -113,4 +138,20 @@ export async function createReport(
     }
     throw e;
   }
+}
+
+export async function notificationRecipients(
+  projectId: string,
+  kind: string,
+  excludeId?: string,
+) {
+  const project = await db.project.findUniqueOrThrow({
+    where: { id: projectId },
+    include: { members: true },
+  });
+  return [
+    ...new Set([project.ownerId, ...project.members.map((m) => m.userId)]),
+  ]
+    .filter((userId) => userId !== excludeId)
+    .map((userId) => ({ userId, kind }));
 }
