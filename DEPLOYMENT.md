@@ -1,5 +1,9 @@
 # Vercel testing deployment
 
+Live: https://buglens-tawny.vercel.app · Demo: https://buglens-tawny.vercel.app/demo
+
+Deployed on 21 October 2026 with Node 22, dedicated Neon PostgreSQL on its free plan and a **private** Vercel Blob store. Database migrations ran during the successful Vercel build. The anonymous demo project contains fake data; its randomly generated owner password is not published. Sign up to receive demo reports in your own workspace.
+
 Use Node 22 and the project root directory **apps/web**. The checked-in `apps/web/vercel.json` installs the root npm workspaces, generates Prisma, applies committed migrations through the unpooled connection when provided, builds the widget and builds Next.js. Preview and production should use separate databases if previews can apply newer migrations.
 
 ## Required services
@@ -27,6 +31,16 @@ To seed a hosted demo, set a private `DEMO_PASSWORD`, `DATABASE_URL`, and the ca
 
 ## Hosted acceptance checks
 
+The real hosted smoke run passed on 21 October 2026. It exercised HTTPS signup/session, project/snippet, demo failure diagnostics, real screenshot upload/download and exported redaction pixels, private Blob direct-access denial, second-user report/image/mutation denial, persisted status/notes after reload, note deletion, physical Blob deletion, external-origin mobile reporting without a screenshot, exclusion of host input/query/fragment values, invalid project/origin rejection, controlled malformed/oversized errors and logout/login. Mocked SDK tests were not used as a substitute for these live checks.
+
+To repeat against a deployment you own, load its server-only `DATABASE_URL` and `BLOB_READ_WRITE_TOKEN` into your shell without committing them, then run:
+
+```sh
+RUN_HOSTED_CHECKS=1 BUGLENS_LIVE_URL=https://your-canonical-app.vercel.app node scripts/hosted-smoke.mjs
+```
+
+This is an explicit opt-in hosted mutation test, separate from the resettable local test database suite. It creates unique fake accounts/projects, only deletes reports/accounts created in that run, and leaves unrelated data untouched. Local temporary review screenshots are written to the OS temporary directory. Use a dedicated testing deployment for repeat runs. The remaining operational checks below are broader than the smoke script; load, crash recovery and non-Chromium testing have not been performed.
+
 Before calling the deployment verified:
 
 - Sign up, log in and log out over HTTPS; verify cookies work on the canonical origin.
@@ -44,4 +58,4 @@ Before calling the deployment verified:
 
 Shared PostgreSQL buckets enforce ingestion quotas across instances; Better Auth also uses database-backed rate limits. Public ingestion remains unauthenticated and can still be abused by a caller that knows a project key and spoofs Origin. A determined caller can exhaust a project or global quota. Production operation needs monitoring, storage quotas/retention, backups and abuse response.
 
-Image upload and database commit cannot be one atomic transaction across services. Normal error paths clean up uploaded assets; process crashes can still require reconciliation. Local development uses the existing private filesystem adapter. The Blob adapter is unit-tested with mocked SDK calls; hosted access/deletion must also be checked against a real private store before claiming deployment verification.
+Image upload and database commit cannot be one atomic transaction across services. Normal error paths clean up uploaded assets; process crashes can still require reconciliation. Local development uses the existing private filesystem adapter. The Blob adapter has both mocked SDK tests and the real hosted access/deletion verification described above.

@@ -2,6 +2,8 @@
 
 A local, full-stack bug-reporting MVP: an embeddable privacy-first widget, a private developer workspace, and a deliberately broken fictional storefront. No paid services or deployment required.
 
+[Live dashboard](https://buglens-tawny.vercel.app) · [Intentional-bug demo](https://buglens-tawny.vercel.app/demo). Create your own account to see and triage your reports. The published demo login below is for local development only.
+
 ## Fresh checkout
 
 Prerequisites: Node.js 22.12+ (Node 22 LTS recommended), npm 10+, Docker with Compose. Ports 3000 and 5432 must be available.
@@ -26,7 +28,11 @@ Open http://127.0.0.1:3000. The seeded account is `demo@buglens.local` / `BugLen
 Create a project, enter exact allowed origins (including scheme and port, without trailing slash), then copy the snippet from Projects:
 
 ```html
-<script src="http://127.0.0.1:3000/widget.js" data-project-key="YOUR_PUBLIC_PROJECT_KEY" defer></script>
+<script
+  src="http://127.0.0.1:3000/widget.js"
+  data-project-key="YOUR_PUBLIC_PROJECT_KEY"
+  defer
+></script>
 ```
 
 Public keys identify a project; they are not authentication credentials. The demo connects signed-in users to their own project when its allowed origins include the current host. Users without a project can click “Connect demo to my workspace”. Anonymous visitors use `buglens-demo-public` and the optional seeded Form & Field project; these anonymous demo reports belong to its seeded owner. For embedding on a different site, allow its origin in Projects. Serve the widget/API over HTTPS when the host uses HTTPS. CSP must permit the script and API connection.

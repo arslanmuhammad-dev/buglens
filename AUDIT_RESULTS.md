@@ -19,8 +19,10 @@
 - Lint and TypeScript: passed after the fixes.
 - Unit/integration suite: 27 passed against a freshly migrated isolated PostgreSQL database.
 - Production build: passed.
-- Browser suite: 15 passed in desktop/mobile Chromium (16.7 seconds). An additional strengthened pixel test then passed, covering password and ordinary input masking without mutating the host values.
-- Private Blob SDK calls are covered by mocked unit tests. A real private Blob store has been provisioned for the hosted acceptance tests; live application checks are tracked in DEPLOYMENT.md.
+- Browser suite: 15 passed in desktop/mobile Chromium in the final complete local run (15.5 seconds), including strengthened password and ordinary input pixel masking checks.
+- GitHub Actions passed for the application changes in [PR #7](https://github.com/arslanmuhammad-dev/buglens/actions/runs/39632480044) on Node 22/PostgreSQL 16.
+- Real hosted checks passed at https://buglens-tawny.vercel.app against Neon PostgreSQL and private Vercel Blob: signup, snippet, intentional failure diagnostics, screenshot capture/export/upload, authenticated retrieval, redaction pixels, direct Blob denial, second-user report/image/mutation denial, persisted triage/notes after reload, note deletion, actual asset deletion, external-origin mobile submission, sensitive-field exclusion, invalid origins/keys, malformed/oversized requests, logout and login.
+- Hosted checks use unique fake accounts and clean up their reports/accounts. See `scripts/hosted-smoke.mjs` and DEPLOYMENT.md for the guarded opt-in command and scope.
 
 ## Boundaries
 

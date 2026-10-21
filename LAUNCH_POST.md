@@ -1,6 +1,6 @@
 # LinkedIn launch draft — for review, not published
 
-Status: hold publication until the real Vercel URL passes the hosted test checklist. Replace the link placeholder with the verified URL.
+Status: hosted acceptance checks passed on 21 October 2026. Awaiting the author's review; no publication or scheduling has occurred.
 
 ---
 
@@ -25,7 +25,8 @@ The demo is a fictional storefront with an intentionally broken checkout, so you
 
 Built with TypeScript, Next.js, PostgreSQL/Prisma, Better Auth, and Vite, with unit, integration, and Chromium/mobile browser tests.
 
-Try it: [VERIFIED VERCEL URL]
+Try it: https://buglens-tawny.vercel.app
+Create your own account, then open the demo storefront to submit and resolve your own report.
 Source: https://github.com/arslanmuhammad-dev/buglens
 
 I’d love feedback from developers: what information is most often missing from the bug reports you receive?
@@ -36,7 +37,7 @@ I’d love feedback from developers: what information is most often missing from
 
 ## Before publishing
 
-- Replace the placeholder with the verified hosted URL.
+- Review and approve the wording before publishing.
 - Attach a short recording: trigger the demo bug → submit report → open dashboard → resolve.
 - Use only fake data and a disposable demo account in the recording.
 - Do not claim that all bugs are eliminated or that unexecuted tests passed.
