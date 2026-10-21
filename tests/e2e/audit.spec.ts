@@ -87,6 +87,12 @@ test("new account demo report belongs to its own workspace and retry is idempote
   });
   expect(response.ok()).toBeTruthy();
   await page.goto("/demo");
+  await expect(
+    page.getByRole("button", { name: "Report a problem", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Place order", exact: true }),
+  ).toBeDisabled();
   await page
     .getByRole("button", { name: "Connect demo to my workspace" })
     .click();
@@ -115,6 +121,36 @@ test("new account demo report belongs to its own workspace and retry is idempote
   ).toHaveCount(1);
   const listing = await (await page.request.get("/api/reports")).json();
   expect(listing.total).toBe(1);
+});
+test("workspace lookup failure cannot silently route reports to the public demo", async ({
+  page,
+}) => {
+  await page.route("**/api/projects", (route) =>
+    route.fulfill({
+      status: 503,
+      json: { error: "Controlled workspace failure" },
+    }),
+  );
+  await page.goto("/demo");
+  await expect(
+    page
+      .getByRole("alert")
+      .filter({ hasText: "could not verify your reporting workspace" }),
+  ).toContainText("could not verify your reporting workspace");
+  await expect(
+    page.getByRole("button", { name: "Report a problem", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Place order", exact: true }),
+  ).toBeDisabled();
+  await page.unroute("**/api/projects");
+  await page.getByRole("button", { name: "Reload demo", exact: true }).click();
+  await expect(
+    page.getByText("Reports go to a shared demo workspace.", { exact: false }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Report a problem", exact: true }),
+  ).toBeVisible();
 });
 test("real cross-origin embed captures fetch, XHR and errors without leaking host inputs", async ({
   page,

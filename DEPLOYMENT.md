@@ -2,6 +2,8 @@
 
 Live: https://buglens-tawny.vercel.app · Demo: https://buglens-tawny.vercel.app/demo
 
+Latest verified application release: `55dc5c9`, production deployment `dpl_6b62UxWepKtC1YNZxaRYJ1gmwj7g`. It was built with `--prod --skip-domain`, checked through authenticated `vercel curl`, then promoted to the canonical domain. The complete hosted smoke suite passed there, including anonymous submission, fresh-account destination safeguards and public social preview assets. The post-promotion error/fatal log query returned zero records.
+
 Deployed on 21 October 2026 with Node 22, dedicated Neon PostgreSQL on its free plan and a **private** Vercel Blob store. Database migrations ran during the successful Vercel build. The anonymous demo project contains fake data; its randomly generated owner password is not published. Sign up to receive demo reports in your own workspace.
 
 Use Node 22 and the project root directory **apps/web**. The checked-in `apps/web/vercel.json` installs the root npm workspaces, generates Prisma, applies committed migrations through the unpooled connection when provided, builds the widget and builds Next.js. Preview and production should use separate databases if previews can apply newer migrations.
@@ -25,7 +27,7 @@ Keep these server-only. Do not prefix credentials with NEXT_PUBLIC, commit them,
 
 ## Demo setup
 
-The demo uses a signed-in user's own allowed project. A user without a project can click **Connect demo to my workspace**. Anonymous visitors use the optional seeded public demo project.
+The demo uses a signed-in user's own allowed project. A signed-in user without a matching project must click **Connect demo to my workspace** before the reporting widget loads. Workspace lookup failures stop reporting until retry. Anonymous visitors use the optional seeded public demo project.
 
 To seed a hosted demo, set a private `DEMO_PASSWORD`, `DATABASE_URL`, and the canonical `BETTER_AUTH_URL` in the shell, then run `NODE_ENV=production npm run db:seed`. The seed refuses to use the documented local password on a hosted deployment. Do not publish the hosted owner password. A publicly shared owner account would allow any visitor to read/delete its reports; invite testers to sign up instead.
 
@@ -39,7 +41,7 @@ To repeat against a deployment you own, load its server-only `DATABASE_URL` and 
 RUN_HOSTED_CHECKS=1 BUGLENS_LIVE_URL=https://your-canonical-app.vercel.app node scripts/hosted-smoke.mjs
 ```
 
-This is an explicit opt-in hosted mutation test, separate from the resettable local test database suite. It creates unique fake accounts/projects, only deletes reports/accounts created in that run, and leaves unrelated data untouched. Local temporary review screenshots are written to the OS temporary directory. Use a dedicated testing deployment for repeat runs. The remaining operational checks below are broader than the smoke script; load, crash recovery and non-Chromium testing have not been performed.
+This is an explicit opt-in hosted mutation test, separate from the resettable local test database suite. It creates unique fake accounts/projects and one screenshot-free anonymous demo report, only deletes records created in that run, and leaves unrelated data untouched. The seeded public demo project is required for the anonymous check. Local temporary review screenshots are written to the OS temporary directory. Use a dedicated testing deployment for repeat runs. The remaining operational checks below are broader than the smoke script; load, crash recovery and non-Chromium testing have not been performed.
 
 Before calling the deployment verified:
 

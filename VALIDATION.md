@@ -8,17 +8,17 @@ Executed on 21 October 2026. Local checks used Node 25.2.1, PostgreSQL 14 and Ch
 | `npm run typecheck`                    | Passed                                    |
 | `npm test` with guarded test database  | 27 passed, no skips                       |
 | `npm run build` (webpack)              | Passed                                    |
-| Chromium E2E suite                     | 15 passed, including mobile core workflow |
+| Chromium E2E suite                     | 16 passed, including mobile core workflow |
 | `npm audit --omit=dev`                 | Zero advisories                           |
 | Fresh test database migration and seed | Passed                                    |
 | Vercel production build and migrations | Passed                                    |
 | Opt-in real hosted acceptance script   | Passed; see DEPLOYMENT.md                 |
 
-The final complete local browser run took 15.5 seconds. Tests use a separate `buglens_test` database, temporary screenshot directory, unique fake accounts, local error endpoints and retained failure traces/screenshots. Reset guards reject non-test databases. Test fixtures clear only test-database rate counters between scenarios; production rate limits remain enabled.
+The final complete local browser run took 14.3 seconds. Tests use a separate `buglens_test` database, temporary screenshot directory, unique fake accounts, local error endpoints and retained failure traces/screenshots. Reset guards reject non-test databases. Test fixtures clear only test-database rate counters between scenarios; production rate limits remain enabled.
 
 ## Coverage
 
-The fifteen browser scenarios bundle the requested functionality:
+The sixteen browser scenarios bundle the requested functionality:
 
 - Signup, project creation and installation snippet.
 - Widget loading, keyboard navigation, native required-field validation and style isolation.
@@ -44,6 +44,8 @@ Unit/integration checks cover payload allowlists and limits, sanitization, bound
 [BugLens live deployment](https://buglens-tawny.vercel.app) passed the guarded `scripts/hosted-smoke.mjs` workflow against real PostgreSQL and private Blob storage. This includes HTTPS signup/logout/login, snippet generation, diagnostic ingestion, stored screenshot retrieval/redaction pixels, direct private Blob denial, cross-account access denial, persisted triage/notes after reload, physical Blob deletion, an independently hosted mobile embed, sensitive-field exclusion and controlled bad requests. Only fake data was used. See [DEPLOYMENT.md](DEPLOYMENT.md) for repetition instructions and the exact smoke scope.
 
 ## GitHub Actions evidence
+
+The final launch application revision `55dc5c9e8bf20604a6a5189cc4a7e05ceebd67c7` passed [PR #8 checks](https://github.com/arslanmuhammad-dev/buglens/actions/runs/39650561192) and [branch checks](https://github.com/arslanmuhammad-dev/buglens/actions/runs/39650492194), including all 16 browser tests. It was staged, promoted and passed the expanded real hosted smoke suite, including anonymous submission, unconnected-user safeguards and public share assets. The subsequent evidence commit only scopes a smoke assertion to the widget's status message and records these results.
 
 The application changes at `d5c539fe94aed706f3c13086664a5b5fc341be54` passed both [PR #7 checks](https://github.com/arslanmuhammad-dev/buglens/actions/runs/39632480044) and [branch checks](https://github.com/arslanmuhammad-dev/buglens/actions/runs/39632375962). These runs include install, database migration/seed, lint, TypeScript, unit/integration, production build and Chromium/mobile tests. Subsequent commits add the hosted smoke script, hosted seed URLs and evidence; their CI results are visible on PR #7.
 
