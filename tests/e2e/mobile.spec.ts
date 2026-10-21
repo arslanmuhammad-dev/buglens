@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 test("mobile core reporting", async ({ page }) => {
   await page.goto("/demo");
   await page.getByRole("button", { name: "Place order", exact: true }).click();

@@ -5,5 +5,8 @@
     "dev": "next dev --webpack --hostname 127.0.0.1",
     "build": "next build --webpack",
     "start": "next start --hostname 127.0.0.1"
+  },
+  "engines": {
+    "node": "22.x"
   }
 }

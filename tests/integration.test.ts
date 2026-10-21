@@ -154,4 +154,62 @@ databaseSuite("real database ownership and history", () => {
     put.mockRestore();
     remove.mockRestore();
   });
+  it("handles concurrent retries as one report and one history entry", async () => {
+    const projectId = (await db.report.findUniqueOrThrow({ where: { id } }))
+      .projectId;
+    const submissionId = crypto.randomUUID();
+    const payload = {
+      projectKey: "test",
+      submissionId,
+      title: "Retry report",
+      description: "Network response lost",
+      steps: "",
+      expected: "",
+      pageUrl: "http://test/",
+      browser: "Chrome" as const,
+      viewport: "800x600",
+      events: [],
+    };
+    const results = await Promise.all([
+      services.createReport(projectId, payload),
+      services.createReport(projectId, payload),
+    ]);
+    expect(results[0].id).toBe(results[1].id);
+    expect(await db.report.count({ where: { projectId, submissionId } })).toBe(
+      1,
+    );
+    expect(
+      await db.reportStatusHistory.count({
+        where: { reportId: results[0].id },
+      }),
+    ).toBe(1);
+  });
+  it("uses an atomic shared rate-limit bucket across concurrent callers", async () => {
+    const { consumeLimit } = await import("../apps/web/lib/rate-limit");
+    const key = "integration:" + crypto.randomUUID();
+    try {
+      const outcomes = await Promise.all(
+        Array.from({ length: 10 }, () =>
+          consumeLimit(key, 3, 100, new Date(1000)),
+        ),
+      );
+      expect(outcomes.filter(Boolean)).toHaveLength(3);
+      expect(await consumeLimit(key, 3, 100, new Date(1101))).toBe(true);
+    } finally {
+      await db.rateLimitBucket.deleteMany({ where: { key } });
+    }
+  });
+  it("updates severity and status in one transaction", async () => {
+    await services.updateTriage(id, "integration-owner", {
+      status: "IN_PROGRESS",
+      severity: "HIGH",
+    });
+    const report = await db.report.findUniqueOrThrow({
+      where: { id },
+      include: { history: true },
+    });
+    expect(report.status).toBe("IN_PROGRESS");
+    expect(report.severity).toBe("HIGH");
+    expect(report.history.some((h) => h.status === "IN_PROGRESS")).toBe(true);
+  });
 });

@@ -2,6 +2,17 @@ import { PrismaClient } from "@prisma/client";
 import { hashPassword } from "better-auth/crypto";
 const db = new PrismaClient();
 async function seed() {
+  const production =
+    process.env.NODE_ENV === "production" || Boolean(process.env.VERCEL);
+  if (production && !process.env.DEMO_PASSWORD)
+    throw Error(
+      "Set a private DEMO_PASSWORD for a hosted demo; default demo credentials are local-only.",
+    );
+  const password = process.env.DEMO_PASSWORD || "BugLens-demo-2026";
+  const base = process.env.BETTER_AUTH_URL || "http://127.0.0.1:3000";
+  const origins = production
+    ? [new URL(base).origin]
+    : ["http://127.0.0.1:3000", "http://localhost:3000"];
   const id = "demo-user";
   await db.user.upsert({
     where: { id },
@@ -16,20 +27,20 @@ async function seed() {
           id: "demo-account",
           accountId: id,
           providerId: "credential",
-          password: await hashPassword("BugLens-demo-2026"),
+          password: await hashPassword(password),
         },
       },
     },
   });
   const project = await db.project.upsert({
     where: { key: "buglens-demo-public" },
-    update: {},
+    update: { origins },
     create: {
       id: "demo-project",
       key: "buglens-demo-public",
       name: "Form & Field",
       ownerId: id,
-      origins: ["http://127.0.0.1:3000", "http://localhost:3000"],
+      origins,
     },
   });
   const titles = [

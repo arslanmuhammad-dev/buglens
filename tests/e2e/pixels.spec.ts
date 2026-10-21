@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import sharp from "sharp";
 import { readdir } from "node:fs/promises";
 
@@ -18,6 +18,18 @@ test("private areas are masked, exported redaction persists, deletion removes as
   await area.scrollIntoViewIfNeeded();
   const rect = (await area.boundingBox())!;
   const width = await page.evaluate(() => innerWidth);
+  const passwordRect = await page.evaluate(() => {
+    const input = document.createElement("input");
+    input.type = "password";
+    input.value = "PASSWORD_SECRET";
+    input.setAttribute("aria-label", "Temporary secret password");
+    input.style.cssText =
+      "position:fixed;top:12px;left:12px;width:180px;height:35px;z-index:100";
+    document.body.append(input);
+    const r = input.getBoundingClientRect();
+    return { x: r.x, y: r.y, width: r.width, height: r.height };
+  });
+  const emailRect = (await page.getByLabel("Demo email").boundingBox())!;
   await page
     .getByRole("button", { name: "Report a problem", exact: true })
     .click();
@@ -47,6 +59,31 @@ test("private areas are masked, exported redaction persists, deletion removes as
     { rect, width },
   );
   expect(pixel).toEqual([38, 60, 53, 255]);
+  for (const rect of [passwordRect, emailRect]) {
+    const masked = await canvas.evaluate(
+      (c: HTMLCanvasElement, args) => {
+        const scale = c.width / args.width;
+        return Array.from(
+          c
+            .getContext("2d")!
+            .getImageData(
+              (args.rect.x + 10) * scale,
+              (args.rect.y + 10) * scale,
+              1,
+              1,
+            ).data,
+        );
+      },
+      { rect, width },
+    );
+    expect(masked).toEqual([38, 60, 53, 255]);
+  }
+  await expect(page.getByLabel("Temporary secret password")).toHaveValue(
+    "PASSWORD_SECRET",
+  );
+  await expect(page.getByLabel("Demo email")).toHaveValue(
+    "private-reporter@example.test",
+  );
   await page.getByLabel("Annotation", { exact: true }).selectOption("redact");
   await page.getByRole("button", { name: "Apply annotation" }).click();
   const submitted = page.waitForRequest(
