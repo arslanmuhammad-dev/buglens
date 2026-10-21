@@ -37,8 +37,8 @@ export class LocalStorage implements AssetStorage {
     });
   }
 }
-export const storage = new LocalStorage();
-export async function decodeImage(value: string) {
+
+async function decodeImageBytes(value: string) {
   if (!/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/]+=*$/.test(value))
     throw Error("Unsupported screenshot");
   const bytes = Buffer.from(value.split(",")[1], "base64");
@@ -55,4 +55,58 @@ export async function decodeImage(value: string) {
   if (normalized.length > 4_000_000)
     throw Error("Normalized screenshot too large");
   return normalized;
+}
+
+// Vercel functions cannot use their local filesystem as durable storage.
+export class PrivateBlobStorage implements AssetStorage {
+  private valid(key: string) {
+    if (!/^buglens\/[a-f0-9-]+\.png$/.test(key)) throw Error("Invalid asset");
+    return key;
+  }
+  async put(bytes: Buffer) {
+    const { put } = await import("@vercel/blob");
+    const key = "buglens/" + randomUUID() + ".png";
+    const blob = await put(key, bytes, {
+      access: "private",
+      contentType: "image/png",
+      addRandomSuffix: false,
+    });
+    return this.valid(blob.pathname);
+  }
+  async get(key: string) {
+    const { get } = await import("@vercel/blob");
+    const result = await get(this.valid(key), { access: "private" });
+    if (!result || result.statusCode !== 200)
+      throw Object.assign(Error("Screenshot not found"), { code: "ENOENT" });
+    return Buffer.from(await new Response(result.stream).arrayBuffer());
+  }
+  async delete(key: string) {
+    const { del } = await import("@vercel/blob");
+    await del(this.valid(key));
+  }
+}
+
+export function createStorage(): AssetStorage {
+  if (process.env.SCREENSHOT_STORAGE === "vercel-blob")
+    return new PrivateBlobStorage();
+  if (process.env.VERCEL)
+    throw Error(
+      "Configure SCREENSHOT_STORAGE=vercel-blob for durable private screenshots",
+    );
+  return new LocalStorage();
+}
+// Resolve lazily so builds do not require production storage credentials.
+export const storage: AssetStorage = {
+  put: (bytes) => createStorage().put(bytes),
+  get: (key) => createStorage().get(key),
+  delete: (key) => createStorage().delete(key),
+};
+
+export class InvalidScreenshotError extends Error {}
+export async function decodeImage(value: string) {
+  try {
+    return await decodeImageBytes(value);
+  } catch {
+    throw new InvalidScreenshotError("Invalid or oversized screenshot");
+  }
 }

@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@prisma/client": "6.19.0",
+    "@vercel/blob": "2.8.2",
     "better-auth": "1.7.12",
     "html2canvas": "1.4.1",
     "next": "16.4.2",
@@ -50,5 +51,8 @@
       "deepmerge-ts": "^8.0.0",
       "effect": "^3.20.0"
     }
+  },
+  "engines": {
+    "node": "22.x"
   }
 }
