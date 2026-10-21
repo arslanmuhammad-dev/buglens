@@ -1,6 +1,6 @@
 # Verification results
 
-Executed locally on 21 October 2026 using Node 25.2.1, npm 11.10.0, PostgreSQL 14 and Chromium 156. CI is configured for Node 22 and PostgreSQL 16; the remote CI job has not been executed here.
+Executed locally on 21 October 2026 using Node 25.2.1, npm 11.10.0, PostgreSQL 14 and Chromium 156. GitHub Actions also passed on Node 22 and PostgreSQL 16; remote run evidence is linked below.
 
 | Check | Actual result |
 | --- | --- |
@@ -38,3 +38,12 @@ Unit/integration checks exercise strict payload allowlists, string/array limits,
 ## Boundaries
 
 The MVP was subsequently pushed through feature pull requests on user request. No application deployment or site publication occurred. Remote CI results are recorded below when available. Firefox/WebKit, distributed rate limits/storage, crash-time file reconciliation, email delivery, and production load/security testing are not claimed. Pointer annotation was tested in desktop Chromium; mobile Chromium covers the core report flow without capture. See README for public-ingestion and html2canvas limitations.
+
+## GitHub Actions verification
+
+On 21 October 2026, both checks for commit `f503202184f0a9e5ad91d47086e98d8b4a4fffc0` completed successfully:
+
+- [PR #6 checks](https://github.com/arslanmuhammad-dev/buglens/actions/runs/39625965113)
+- [Feature branch push checks](https://github.com/arslanmuhammad-dev/buglens/actions/runs/39625904508)
+
+These runs used Node 22 and PostgreSQL 16 and passed installation, migration/seed, lint, TypeScript, unit/integration tests, production build, and Chromium/mobile browser tests. The following documentation-only commit records this evidence; the links above refer to the exact tested source commit.
