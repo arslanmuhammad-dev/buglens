@@ -33,6 +33,11 @@ test("customer tracking, public replies, private notes, notifications, reopen an
   await page
     .getByLabel("Description *", { exact: true })
     .fill("Checkout stops at payment");
+  await expect(
+    page.getByText("Your name appears in the report conversation.", {
+      exact: false,
+    }),
+  ).toBeVisible();
   await page.getByLabel("Your name", { exact: true }).fill("Mina Customer");
   await page
     .getByLabel("Your email", { exact: true })

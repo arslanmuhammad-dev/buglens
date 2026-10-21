@@ -40,7 +40,7 @@ Public keys identify a project; they are not authentication credentials. The dem
 ## Customer follow-up and developer teams
 
 1. A website owner signs up, creates a project and installs its snippet. End customers do not need an account.
-2. The reporter may explicitly enter a name/email. These are voluntary, unverified contact details, not authenticated customer identity. The collector never reads the host application's logged-in user or form data.
+2. The reporter may explicitly enter a name/email. These are voluntary, unverified contact details, not authenticated customer identity. The optional name appears as the reporter’s conversation display name; email is visible only to the project team. The widget explains this before submission. The collector never reads the host application's logged-in user or form data.
 3. After submission the widget displays a private tracking link. Save it before leaving. The link grants access to this report's description, status history and public conversation only; it never exposes screenshots, diagnostics, internal notes or contact email.
 4. The project team receives an unread workspace notification for the report and customer replies. Notifications persist, can be marked read and refresh every 30 seconds while the dashboard is visible. The inbox shows the latest 50; all reports remain searchable.
 5. Developers write **Public reply** to communicate with the reporter; **Internal notes** stay private. Both parties use Refresh conversation to see updates. Status updates appear on the tracking page after Refresh report status/reload. A reporter can reopen a resolved report if the issue remains.
