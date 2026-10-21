@@ -45,6 +45,8 @@ Unit/integration checks cover payload allowlists and limits, sanitization, bound
 
 ## GitHub Actions evidence
 
+The final launch application revision `55dc5c9e8bf20604a6a5189cc4a7e05ceebd67c7` passed [PR #8 checks](https://github.com/arslanmuhammad-dev/buglens/actions/runs/39650561192) and [branch checks](https://github.com/arslanmuhammad-dev/buglens/actions/runs/39650492194), including all 16 browser tests. It was staged, promoted and passed the expanded real hosted smoke suite, including anonymous submission, unconnected-user safeguards and public share assets. The subsequent evidence commit only scopes a smoke assertion to the widget's status message and records these results.
+
 The application changes at `d5c539fe94aed706f3c13086664a5b5fc341be54` passed both [PR #7 checks](https://github.com/arslanmuhammad-dev/buglens/actions/runs/39632480044) and [branch checks](https://github.com/arslanmuhammad-dev/buglens/actions/runs/39632375962). These runs include install, database migration/seed, lint, TypeScript, unit/integration, production build and Chromium/mobile tests. Subsequent commits add the hosted smoke script, hosted seed URLs and evidence; their CI results are visible on PR #7.
 
 ## Boundaries

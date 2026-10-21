@@ -2,6 +2,8 @@
 
 Live: https://buglens-tawny.vercel.app · Demo: https://buglens-tawny.vercel.app/demo
 
+Latest verified application release: `55dc5c9`, production deployment `dpl_6b62UxWepKtC1YNZxaRYJ1gmwj7g`. It was built with `--prod --skip-domain`, checked through authenticated `vercel curl`, then promoted to the canonical domain. The complete hosted smoke suite passed there, including anonymous submission, fresh-account destination safeguards and public social preview assets. The post-promotion error/fatal log query returned zero records.
+
 Deployed on 21 October 2026 with Node 22, dedicated Neon PostgreSQL on its free plan and a **private** Vercel Blob store. Database migrations ran during the successful Vercel build. The anonymous demo project contains fake data; its randomly generated owner password is not published. Sign up to receive demo reports in your own workspace.
 
 Use Node 22 and the project root directory **apps/web**. The checked-in `apps/web/vercel.json` installs the root npm workspaces, generates Prisma, applies committed migrations through the unpooled connection when provided, builds the widget and builds Next.js. Preview and production should use separate databases if previews can apply newer migrations.

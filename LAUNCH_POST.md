@@ -39,5 +39,6 @@ I’d love feedback from developers: what information is most often missing from
 
 - Review and approve the wording before publishing.
 - Attach a short recording: trigger the demo bug → submit report → open dashboard → resolve.
+- The branded link-preview graphic is available at https://buglens-tawny.vercel.app/opengraph-image.
 - Use only fake data and a disposable demo account in the recording.
 - Do not claim that all bugs are eliminated or that unexecuted tests passed.

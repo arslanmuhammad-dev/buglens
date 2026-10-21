@@ -25,6 +25,8 @@
 - GitHub Actions passed for the application changes in [PR #7](https://github.com/arslanmuhammad-dev/buglens/actions/runs/39632480044) on Node 22/PostgreSQL 16.
 - Real hosted checks passed at https://buglens-tawny.vercel.app against Neon PostgreSQL and private Vercel Blob: signup, snippet, intentional failure diagnostics, screenshot capture/export/upload, authenticated retrieval, redaction pixels, direct Blob denial, second-user report/image/mutation denial, persisted triage/notes after reload, note deletion, actual asset deletion, external-origin mobile submission, sensitive-field exclusion, invalid origins/keys, malformed/oversized requests, logout and login.
 - Hosted checks use unique fake accounts and clean up their reports/accounts. See `scripts/hosted-smoke.mjs` and DEPLOYMENT.md for the guarded opt-in command and scope.
+- Final public launch verification passed on production build `55dc5c9` / deployment `dpl_6b62UxWepKtC1YNZxaRYJ1gmwj7g`: canonical social image, PNG dimensions, favicon, actual anonymous report submission and unconnected-user safeguards, followed by the full hosted acceptance flow above. Only fake records created by the check were removed.
+- Both [launch PR CI](https://github.com/arslanmuhammad-dev/buglens/actions/runs/39650561192) and [branch CI](https://github.com/arslanmuhammad-dev/buglens/actions/runs/39650492194) passed for that application revision. A post-promotion runtime log query for error/fatal entries returned zero records; this is a point-in-time check, not continuous monitoring.
 
 ## Boundaries
 

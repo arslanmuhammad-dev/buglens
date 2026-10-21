@@ -73,7 +73,9 @@ try {
       r.url() === origin + "/api/ingest" && r.request().method() === "POST",
   );
   await page.getByRole("button", { name: "Send report" }).click();
-  await expect(page.getByRole("status")).toContainText("Report sent");
+  await expect(
+    page.getByRole("status").filter({ hasText: "Report sent" }),
+  ).toContainText("Report sent");
   const publicResponse = await publicSubmission;
   publicReportId = (await publicResponse.json()).id;
   check(
