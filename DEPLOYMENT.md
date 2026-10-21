@@ -8,6 +8,8 @@ Deployed on 21 October 2026 with Node 22, dedicated Neon PostgreSQL on its free 
 
 Use Node 22 and the project root directory **apps/web**. The checked-in `apps/web/vercel.json` installs the root npm workspaces, generates Prisma, applies committed migrations through the unpooled connection when provided, builds the widget and builds Next.js. Preview and production should use separate databases if previews can apply newer migrations.
 
+The customer conversation/team release and its latest verification are documented in [CUSTOMER_RELEASE.md](CUSTOMER_RELEASE.md). The launch-day record above is historical.
+
 ## Required services
 
 1. A hosted PostgreSQL database, for example the Neon free plan through Vercel Marketplace. Use a dedicated BugLens database; never a production database belonging to another application.
@@ -18,6 +20,7 @@ The runtime fails closed on Vercel if screenshot storage is not configured as `v
 ## Required environment
 
 - `DATABASE_URL`: hosted PostgreSQL connection string; use a pooled connection appropriate for serverless functions.
+- `DATABASE_URL_UNPOOLED` (or `POSTGRES_URL_NON_POOLING`): direct connection for Prisma migrations. Always use this for manual migrations too; running migration advisory locks through PgBouncer can leave an idle migration session holding the lock. Do not reset a hosted database to resolve a lock timeout.
 - `BETTER_AUTH_SECRET`: a freshly generated random secret of at least 32 characters.
 - `BETTER_AUTH_URL`: the exact canonical HTTPS application origin used during testing.
 - `SCREENSHOT_STORAGE=vercel-blob`
@@ -55,6 +58,14 @@ Before calling the deployment verified:
 - Delete the report and verify its Blob asset was deleted.
 - Check rate limits across requests/functions, and controlled oversized/malformed errors.
 - Check mobile reporting, capture failure and retry after a lost response.
+
+To verify customer follow-up and team access separately:
+
+```sh
+RUN_HOSTED_CHECKS=1 BUGLENS_LIVE_URL=https://your-canonical-app.vercel.app node scripts/hosted-communication-smoke.mjs
+```
+
+This uses isolated fake owner/developer accounts, a mobile reporter, the real widget, hashed tracking capabilities, public/private conversations, notifications, status/reopening, team invitations/removal and deletion cascades. It removes only its own UUID-based test data. Email delivery is disabled until a sender domain and recipient verification are implemented; no email credentials are required for this flow.
 
 ## Operational boundaries
 

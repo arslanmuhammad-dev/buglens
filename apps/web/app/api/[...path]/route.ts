@@ -1,3 +1,5 @@
+import { projectAccess } from "../../../lib/access";
+import { communicationApi, trackingApi } from "../../../lib/communication-api";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "../../../lib/auth";
 import { db } from "../../../lib/db";
@@ -100,11 +102,21 @@ async function handle(req: NextRequest) {
   const [resource, id, action] = parts;
   if (resource === "ingest" && parts.length === 1) return ingest(req);
   try {
+    if (resource === "track") return await trackingApi(req, parts);
     if (resource === "demo-order" && parts.length === 1)
       return req.method === "POST"
         ? json({ error: "Intentional demo: payment service unavailable" }, 503)
         : methodNotAllowed("POST");
-    if (!["projects", "reports"].includes(resource) || parts.length > 3)
+    if (
+      ![
+        "projects",
+        "reports",
+        "teams",
+        "invitations",
+        "notifications",
+      ].includes(resource) ||
+      parts.length > 3
+    )
       return json({ error: "Not found" }, 404);
     const session = await auth.api.getSession({ headers: req.headers });
     if (!session) return json({ error: "Unauthorized" }, 401);
@@ -115,12 +127,17 @@ async function handle(req: NextRequest) {
       req.headers.get("origin") !== origin
     )
       throw new HttpError(403, "Invalid request origin");
+    const communication = await communicationApi(req, parts, session.user);
+    if (communication) return communication;
     if (resource === "projects") {
       if (action) return json({ error: "Not found" }, 404);
       if (req.method === "GET" && !id)
         return json(
           await db.project.findMany({
-            where: { ownerId },
+            where: projectAccess(ownerId),
+            include: {
+              members: { where: { userId: ownerId }, select: { userId: true } },
+            },
             orderBy: { createdAt: "asc" },
           }),
         );
@@ -159,7 +176,7 @@ async function handle(req: NextRequest) {
         ? z.enum(["LOW", "MEDIUM", "HIGH"]).parse(q.get("severity"))
         : undefined;
       const where = {
-        project: { ownerId },
+        project: projectAccess(ownerId),
         ...(q.get("project") ? { projectId: q.get("project")! } : {}),
         ...(status ? { status } : {}),
         ...(severity ? { severity } : {}),
@@ -227,7 +244,7 @@ async function handle(req: NextRequest) {
     if (req.method === "GET")
       return json(
         await db.report.findFirst({
-          where: { id, project: { ownerId } },
+          where: { id, project: projectAccess(ownerId) },
           include: {
             project: true,
             screenshot: { select: { id: true } },
@@ -238,6 +255,12 @@ async function handle(req: NextRequest) {
         }),
       );
     if (req.method === "DELETE") {
+      if (
+        !(await db.project.findFirst({
+          where: { id: owned.projectId, ownerId },
+        }))
+      )
+        return json({ error: "Not found" }, 404);
       await deleteReport(id, ownerId);
       return json({ ok: true });
     }

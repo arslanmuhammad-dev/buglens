@@ -42,3 +42,9 @@ I’d love feedback from developers: what information is most often missing from
 - The branded link-preview graphic is available at https://buglens-tawny.vercel.app/opengraph-image.
 - Use only fake data and a disposable demo account in the recording.
 - Do not claim that all bugs are eliminated or that unexecuted tests passed.
+
+## Customer follow-up update (review only)
+
+BugLens now includes a private report conversation: customers save a secure tracking link, see status updates, reply to the developer, and reopen a resolved issue. Developers get persistent workspace notifications and can invite teammates to specific projects. Public replies and private internal notes are separate.
+
+Accurate launch wording: “A bug-reporting MVP that closes the feedback loop through private tracking links and report conversations.” Email notifications, live typing/presence, verified customer identity and password-reset email are not shipped. No sender domain has been configured. This draft has not been published or scheduled.
