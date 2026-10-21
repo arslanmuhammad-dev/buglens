@@ -52,3 +52,18 @@ The application changes at `d5c539fe94aed706f3c13086664a5b5fc341be54` passed bot
 ## Boundaries
 
 This verifies an MVP, not absence of every bug. Firefox/WebKit, load testing, crash-time asset reconciliation, backup restoration, email delivery and enterprise abuse controls have not been verified. Shared database-backed limits and real private storage have been implemented and exercised; a sustained distributed abuse test has not been run. Public Origin headers are spoofable and keys are public. html2canvas cannot reproduce every CSS feature, cross-origin image, iframe or browser-native surface. Mobile Chromium is not Safari. LinkedIn publication is awaiting draft review.
+
+## Customer resolution loop — 22 October 2026
+
+The customer conversation/team-access release adds eight unit/database tests and two Chromium end-to-end scenarios. The existing mobile scenario now follows the private tracking link, submits a customer reply and verifies persistence after reload.
+
+Executed locally against the guarded `buglens_test` database and a production Next.js build:
+
+- Lint and TypeScript checks: passed.
+- Vitest: **35 passed**, including actual PostgreSQL checks for tracking hash/expiry/isolation, public/private field separation, concurrent reply idempotency, notifications, developer permissions/revocation, reporter reopening, bounded conversation pagination and deletion cascades.
+- Chromium/mobile Playwright: **25 passed**. Includes actual widget contact/tracking, failed reply preservation/retry, public replies versus private notes, status visibility, customer reopening, token revocation, wrong-recipient/one-use invitations, and developer restrictions/removal.
+- Production build: passed with `/track/[id]` and `/join` routes.
+
+Initial browser runs found two test-locator issues (old demo-connect button text and Next.js's extra route-announcer alert); those selectors were corrected. Existing privacy, screenshot pixel masking/redaction, file cleanup, submission retry, filters, pagination, ownership and race-condition regressions remain covered.
+
+Live verification evidence is recorded in `CUSTOMER_RELEASE.md` after deployment. Automatic email delivery remains unavailable; no verified sender domain is configured and this release does not pretend to send email. Conversation refresh is explicit; workspace notifications refresh every 30 seconds while visible.
