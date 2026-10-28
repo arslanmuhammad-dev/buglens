@@ -5,11 +5,16 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: buglens
-    ports: ['5432:5432']
-    volumes: ['postgres_data:/var/lib/postgresql/data']
+    ports: ["127.0.0.1:${POSTGRES_PORT:-5432}:5432"]
+    volumes: ["postgres_data:/var/lib/postgresql/data"]
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 3s
       retries: 10
+  mailpit:
+    image: axllent/mailpit:v1.32.0
+    ports: ["127.0.0.1:8025:8025"]
+    environment:
+      MP_MAX_MESSAGES: 500
 volumes:
   postgres_data:

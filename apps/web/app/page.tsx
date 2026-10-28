@@ -281,6 +281,11 @@ export default function Dashboard() {
                 {signup ? "Sign in" : "Create an account"}
               </button>
             </p>
+            {!signup && (
+              <p>
+                <a href="/forgot-password">Forgot password?</a>
+              </p>
+            )}
             <div className="auth-foot">
               ⌁ &nbsp; Privacy-first by design. Built for better debugging.
             </div>
