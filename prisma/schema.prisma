@@ -20,6 +20,7 @@ model User {
   projects      Project[]
   memberships   ProjectMember[]
   notifications Notification[]
+  emails        EmailJob[]
 }
 
 model Session {
@@ -84,6 +85,7 @@ model Report {
   trackingExpiresAt DateTime?
   messages          ReportMessage[]
   notifications     Notification[]
+  emails            EmailJob[]
   title             String
   description       String
   steps             String
@@ -203,4 +205,28 @@ model Notification {
   createdAt DateTime  @default(now())
 
   @@index([userId, readAt, createdAt])
+}
+
+model EmailJob {
+  id         String    @id @default(uuid())
+  kind       String
+  dedupeKey  String    @unique
+  content    String?
+  state      String    @default("PENDING")
+  attempts   Int       @default(0)
+  nextAt     DateTime  @default(now())
+  leaseUntil DateTime?
+  expiresAt  DateTime
+  lastError  String?
+  providerId String?
+  createdAt  DateTime  @default(now())
+  sentAt     DateTime?
+  userId     String?
+  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reportId   String?
+  report     Report?   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([state, nextAt])
+  @@index([reportId])
+  @@index([userId])
 }
